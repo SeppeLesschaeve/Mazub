@@ -3,6 +3,7 @@ package jumpingalien.model;
 import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.*;
+import be.kuleuven.cs.som.taglet.*;
 import jumpingalien.util.Sprite;
 
 /**
