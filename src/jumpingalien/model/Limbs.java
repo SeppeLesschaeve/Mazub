@@ -1,5 +1,6 @@
 package jumpingalien.model;
 
+import be.kuleuven.cs.som.taglet.*;
 /**
  * This class is able to hold and to change the number of limbs of an animal with limbs
  * 
