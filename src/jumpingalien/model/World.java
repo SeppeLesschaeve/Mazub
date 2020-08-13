@@ -32,7 +32,7 @@ import be.kuleuven.cs.som.annotate.*;
  * @author Seppe Lesschaeve (Informatica)
  * 
  */
-public class World implements CollisionHandler, FeatureHandler{
+public class World implements FeatureHandler{
 
 	private final int tileLength;
 	private Rectangle gameWorld;
@@ -43,7 +43,6 @@ public class World implements CollisionHandler, FeatureHandler{
 	private static final int MAX_SCHOOLS = 10;
 	private static final int MAX_OBJECTS = 100;
 	
-	private Set<CollisionHandler> collisionHandlers = new HashSet<>();
 	private Set<FeatureHandler> featureHandlers = new HashSet<>();
 	private Set<GameObject> gameObjects = new HashSet<>();
 	private Set<School> schools = new HashSet<>();
@@ -100,8 +99,7 @@ public class World implements CollisionHandler, FeatureHandler{
 		this.gameWorld = new Rectangle(0,0, tileSize*nbTilesX, tileSize*nbTilesY);
 		setWindow(visibleWidth, visibleHeight);
 		setTargetTile(tileSize, target);
-		collisionHandlers.addAll(Arrays.asList(new SharkMazubHandler(), new SlimeMazubHandler(), new SlimeSharkHandler(),
-				new SpiderMazubHandler(), new SpiderSharkHandler(), new SpiderSlimeHandler(), new SneezewortMazubHandler(), new SkullcabMazubHandler()));
+		
 	}
 
 	/**
@@ -690,23 +688,6 @@ public class World implements CollisionHandler, FeatureHandler{
 		}
 	}
 	
-	/**
-	 * This method is used to handle the collision between two Object over an interval dt
-	 * 
-	 * @param colliderOne
-	 * 			This parameter is the first Object
-	 * @param colliderTwo
-	 * 			This parameter is the second Object
-	 * @param dt
-	 * 			This parameter is the interval
-	 * 
-	 */
-	@Override
-	public void handleCollision(Object colliderOne, Object colliderTwo, double dt) {
-		for(CollisionHandler handler: collisionHandlers) {
-			handler.handleCollision(colliderOne, colliderTwo, dt);
-		}
-	}
 	
 	public void handleFeatureHit(GameObject object, double dt) {
 		for(FeatureHandler handler: featureHandlers) {
@@ -776,7 +757,6 @@ public class World implements CollisionHandler, FeatureHandler{
 	public void terminate() {
 		gameObjects.stream().forEach(object -> object.setWorld(null));
 		gameObjects.clear();
-		collisionHandlers.clear();
 		this.setTerminated();
 	}
 	

@@ -103,7 +103,7 @@ public class Sneezewort extends Plant implements Run{
 				arrangeMove(dt);
 			}else {
 				if(getWorld() != null && getWorld().getPlayer() != null) {
-					getWorld().handleCollision(getWorld().getPlayer(), this, deltaT);
+					getWorld().getPlayer().arrangeObjectHit(deltaT);
 				}
 				super.setDelay(dt);
 			}
@@ -132,7 +132,7 @@ public class Sneezewort extends Plant implements Run{
 			terminate(); return;
 		}
 		if(getWorld() != null && getWorld().getPlayer() != null) {
-			getWorld().handleCollision(getWorld().getPlayer(), this, deltaT);
+			getWorld().getPlayer().arrangeObjectHit(deltaT);
 		}
 	}
 	

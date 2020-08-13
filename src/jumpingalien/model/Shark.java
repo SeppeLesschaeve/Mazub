@@ -30,6 +30,28 @@ public class Shark extends Creature implements Run, Jump{
 	private static final double Y_ACC = -10.0;
 	private static final double Y_VEL = 2.0;
 	
+	private SharkHitHandler hitHandler = new SharkHitHandler() {
+
+		@Override
+		public void arrangeMazubHit(double dt) {
+			if(getBlockTime() == 0) setHitPoints((int) Constant.SHARK_MAZUB.getValue());
+			setBlockTime(getBlockTime() + dt);
+			if(getBlockTime() >= Constant.BLOCK.getValue()) {
+				setBlockTime(0.0);
+			}
+		}
+
+		@Override
+		public void arrangeSlimeHit(double dt) {
+			if(getBlockTime() == 0) setHitPoints((int) Constant.SHARK_SLIME.getValue());
+			setBlockTime(getBlockTime() + dt);
+			if(getBlockTime() >= Constant.BLOCK.getValue()) {
+				setBlockTime(0.0);
+			}
+		}
+		
+	};
+	
 	/**This constructor will set the initial Pixel Position, Actual Position, Dimension and the images to show the animation
 	 * 
 	 * @param pixelLeftX
@@ -424,10 +446,12 @@ public class Shark extends Creature implements Run, Jump{
 		Set<GameObject> objects = getCollidingObjects();
 		if(getWorld() != null) {
 			for(GameObject object: objects) {
-				if(object instanceof Shark && object.getBlockTime() == 0) {
-					arrangeSwitch(this);
-				}else {
-					getWorld().handleCollision(this, object, dt);
+				int type = getGameObjectType(object);
+				switch(type) {
+				case 0:hitHandler.arrangeMazubHit(dt);break;
+				case 3:hitHandler.arrangeSlimeHit(dt);break;
+				case 4: if(object.getBlockTime() == 0)arrangeSwitch(this);break;
+				default: break;
 				}
 			}
 		}

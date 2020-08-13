@@ -106,7 +106,7 @@ public class Skullcab extends Plant implements Jump{
 				arrangeMove(dt);
 			}else {
 				if(getWorld() != null && getWorld().getPlayer() != null) {
-					getWorld().handleCollision(getWorld().getPlayer(), this, deltaT);
+					getWorld().getPlayer().arrangeObjectHit(deltaT);
 				}
 				super.setDelay(dt);
 			}
@@ -135,7 +135,7 @@ public class Skullcab extends Plant implements Jump{
 			terminate(); return;
 		}
 		if(getWorld() != null && getWorld().getPlayer() != null) {
-			getWorld().handleCollision(getWorld().getPlayer(), this, deltaT);
+			getWorld().getPlayer().arrangeObjectHit(deltaT);
 		}
 	}
 

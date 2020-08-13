@@ -27,6 +27,33 @@ public class Slime extends Creature implements Run{
 	private static final double X_ACC = 0.7;
 	private static final double X_MAX_VELOCITY = 2.5;
 	
+	private SlimeHitHandler hitHandler = new SlimeHitHandler() {
+
+		@Override
+		public void arrangeMazubHit(double dt) {
+			if(isRunning() && getBlockTime() == 0) {
+				setHitPoints((int) Constant.SLIME_MAZUB.getValue());
+				synchronizeSchool();
+			}
+			setBlockTime(getBlockTime() + dt);
+			if(getBlockTime() >= Constant.BLOCK.getValue()) {
+				setBlockTime(0.0);
+			}
+			
+		}
+
+		@Override
+		public void arrangeSharkHit(double dt) {
+			if(getBlockTime() == 0) setHitPoints(-getHitPoints());
+			setBlockTime(getBlockTime() + dt);
+			if(getBlockTime() >= Constant.BLOCK.getValue()) {
+				setBlockTime(0.0);
+			}
+			
+		}
+		
+	};
+	
 	/**
 	 * This constructor will set the initial Pixel Position, Actual Position, HitPoints and the images to show the animation
 	 * 
@@ -471,7 +498,12 @@ public class Slime extends Creature implements Run{
 		Set<GameObject> objects = getCollidingObjects();
 		if(getWorld() != null) {
 			for(GameObject object: objects) {
-				getWorld().handleCollision(this, object, dt);
+				int type = getGameObjectType(object);
+				switch(type) {
+				case 0: hitHandler.arrangeMazubHit(dt);break;
+				case 4: hitHandler.arrangeSharkHit(dt);break;
+				default:break;
+				}
 			}
 		}
 	}

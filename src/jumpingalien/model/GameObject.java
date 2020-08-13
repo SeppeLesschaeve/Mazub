@@ -323,4 +323,13 @@ public abstract class GameObject{
 		return objects;
 	}
 	
+	protected int getGameObjectType(GameObject gameObject) {
+		if(gameObject instanceof Mazub) return 0;
+		else if (gameObject instanceof Sneezewort) return 1;
+		else if(gameObject instanceof Skullcab) return 2;
+		else if(gameObject instanceof Slime) return 3;
+		else if(gameObject instanceof Shark) return 4;
+		else if(gameObject instanceof Spider) return 5;
+		else return -1;
+	}
 }

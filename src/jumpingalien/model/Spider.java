@@ -21,6 +21,7 @@ public class Spider extends GameObject implements Run, Jump{
 
 	private Limbs legs;
 	private double featureTime;
+	private double time;
 	private static final double JUMP_ACC = 0.5;
 	private static final double JUMP_VEL = 1.0;
 	private Acceleration acceleration = new Acceleration() {
@@ -47,6 +48,49 @@ public class Spider extends GameObject implements Run, Jump{
 		}
 
 	};
+	
+	private SpiderHitHandler hitHandler = new SpiderHitHandler() {
+
+		@Override
+		public void arrangeMazubHit(double dt) {
+			setLegs(getLegs() - 1);
+			if(isRunning()) {
+				getVelocity().setX(0);
+			}
+			if(isJumping() || isFalling()) {
+				getVelocity().setY(0); 
+				getAcceleration().setY(0);
+			}
+		}
+
+		@Override
+		public void arrangeSlimeHit(double dt) {
+			setTime(getTime() + dt);
+			if(getTime() >= 0.5) {
+				setLegs(getLegs() + 1);
+				setTime(0.0);
+			}
+			
+		}
+
+		@Override
+		public void arrangeSharkHit(double dt) {
+			if(getBlockTime() == 0)setLegs(getLegs()/2);
+			setBlockTime(getBlockTime() + dt);
+			if(getBlockTime() >= Constant.BLOCK.getValue()) {
+				setBlockTime(0.0);
+			}
+			if(isRunning()) {
+				getVelocity().setX(0);
+			}
+			if(isJumping() || isFalling()) {
+				getVelocity().setY(0); 
+				getAcceleration().setY(0);
+			}
+		}
+		
+	};
+	
 
 	/**
 	 * 
@@ -393,11 +437,16 @@ public class Spider extends GameObject implements Run, Jump{
 		Set<GameObject> objects = getCollidingObjects();
 		if(getWorld() != null) {
 			for(GameObject object: objects) {
-				if(object instanceof Spider && object.getBlockTime() == 0) {
+				int type = getGameObjectType(object);
+				switch(type) {
+				case 0:hitHandler.arrangeMazubHit(dt);
+				case 3:hitHandler.arrangeSlimeHit(dt);
+				case 4:hitHandler.arrangeSharkHit(dt);
+				case 5:if(object instanceof Spider && object.getBlockTime() == 0) {
 					if(isRunning()) endRun(dt);
 					if(isJumping() || isFalling()) endJump(dt);
-				}else {
-					getWorld().handleCollision(this, object, dt);
+				}break;
+				default: break;
 				}
 			}
 		}
@@ -551,6 +600,14 @@ public class Spider extends GameObject implements Run, Jump{
 	@Override
 	public Acceleration getAcceleration() {
 		return acceleration;
+	}
+	
+	public double getTime() {
+		return time;
+	}
+
+	public void setTime(double time) {
+		this.time = time;
 	}
 	
 }
