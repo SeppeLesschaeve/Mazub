@@ -171,7 +171,7 @@ public class Facade implements IFacade {
 	public World createWorld(int tileSize, int nbTilesX, int nbTilesY, int[] targetTileCoordinate,
 			int visibleWindowWidth, int visibleWindowHeight, int... geologicalFeatures) throws ModelException {
 		try {
-			return new World(tileSize, nbTilesX, nbTilesY, targetTileCoordinate, visibleWindowWidth,
+			return new World(100, tileSize, nbTilesX, nbTilesY, targetTileCoordinate, visibleWindowWidth,
 					visibleWindowHeight, geologicalFeatures);
 		}catch(IllegalArgumentException ill) {
 			throw new ModelException("You can not create a world with given parameters");

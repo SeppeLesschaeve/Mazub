@@ -1,6 +1,5 @@
 package jumpingalien.model;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,7 +40,7 @@ public class World implements FeatureHandler{
 	private Tile targetTile;
 	
 	private static final int MAX_SCHOOLS = 10;
-	private static final int MAX_OBJECTS = 100;
+	private final int maxObjects;
 	
 	private Set<FeatureHandler> featureHandlers = new HashSet<>();
 	private Set<GameObject> gameObjects = new HashSet<>();
@@ -86,7 +85,7 @@ public class World implements FeatureHandler{
 	 *		|	new SpiderMazubHandler(), new SpiderSharkHandler(), new SpiderSlimeHandler(), new SneezewortMazubHandler(), new SkullcabMazubHandler()))
 	 *
 	 */
-	public World(int tileSize, int nbTilesX, int nbTilesY, int[] target, int visibleWidth, int visibleHeight, int... geologicalFeatures) throws IllegalArgumentException{
+	public World(int maxObjects, int tileSize, int nbTilesX, int nbTilesY, int[] target, int visibleWidth, int visibleHeight, int... geologicalFeatures) throws IllegalArgumentException{
 		if(tileSize <= 0) { tileSize = Math.abs(tileSize);}
 		if(nbTilesX < 0 ) {	nbTilesX = Math.abs(nbTilesX);}
 		if(nbTilesY < 0 ) {	nbTilesY = Math.abs(nbTilesY);}
@@ -99,7 +98,7 @@ public class World implements FeatureHandler{
 		this.gameWorld = new Rectangle(0,0, tileSize*nbTilesX, tileSize*nbTilesY);
 		setWindow(visibleWidth, visibleHeight);
 		setTargetTile(tileSize, target);
-		
+		this.maxObjects = maxObjects;
 	}
 
 	/**
@@ -474,7 +473,7 @@ public class World implements FeatureHandler{
 	 *		
 	 */
 	public boolean canHaveAsGameObject(GameObject object) {
-		if(gameObjects.size() == MAX_OBJECTS && !(object instanceof Mazub)) return false;
+		if(gameObjects.size() == maxObjects && !(object instanceof Mazub)) return false;
 		return object != null && !object.isTerminated() && object.getWorld() == null &&
 				!shallBeImpassable(object) && !shallOverlap(object) && object.getRectangle().overlaps(gameWorld);
 	}

@@ -215,8 +215,8 @@ public class Mazub extends Creature implements Run, Jump{
 	public void startRunRight() {
 		assert(!isRunning() && !isDead());
 		super.setSprite(8);
-		setAcceleration(X_ACC, 0.0);
-		setVelocity( MIN_X_VELOCITY , 0.0);
+		setAcceleration(X_ACC, super.getAcceleration().getY());
+		setVelocity( MIN_X_VELOCITY , super.getVelocity().getY());
 		getVelocity().setBoundsOfVelocity(MIN_X_VELOCITY, MAX_X_VELOCITY);
 		super.setBorders();
 	}
@@ -234,8 +234,8 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	public void startRunLeft() {
 		assert(!isRunning() && !isDead());
-		setAcceleration(-X_ACC, 0.0);
-		setVelocity( -MIN_X_VELOCITY , 0.0);
+		setAcceleration(-X_ACC, super.getAcceleration().getY());
+		setVelocity( -MIN_X_VELOCITY , super.getVelocity().getY());
 		getVelocity().setBoundsOfVelocity(MIN_X_VELOCITY, MAX_X_VELOCITY);
 		super.setSprite(((super.getSprites().length - 8) /2 ) + 8);
 		super.setBorders();
