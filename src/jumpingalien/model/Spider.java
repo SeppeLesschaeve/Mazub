@@ -25,49 +25,6 @@ public class Spider extends Organism implements Run, Jump{
 	private static final double JUMP_ACC = 0.5;
 	private static final double JUMP_VEL = 1.0;
 	
-	private SpiderHitHandler hitHandler = new SpiderHitHandler() {
-
-		@Override
-		public void arrangeMazubHit(double dt) {
-			setLegs(getLegs() - 1);
-			if(isRunning()) {
-				kinematics.setHorizontalVelocity(0);
-			}
-			if(isJumping() || isFalling()) {
-				kinematics.setVerticalAcceleration(0);
-				kinematics.setVerticalVelocity(0);
-			}
-		}
-
-		@Override
-		public void arrangeSlimeHit(double dt) {
-			setTime(getTime() + dt);
-			if(getTime() >= 0.5) {
-				setLegs(getLegs() + 1);
-				setTime(0.0);
-			}
-			
-		}
-
-		@Override
-		public void arrangeSharkHit(double dt) {
-			if(getBlockTime() == 0)setLegs(getLegs()/2);
-			setBlockTime(getBlockTime() + dt);
-			if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
-				setBlockTime(0.0);
-			}
-			if(isRunning()) {
-				kinematics.setHorizontalVelocity(0);
-			}
-			if(isJumping() || isFalling()) {
-				kinematics.setVerticalAcceleration(0);
-				kinematics.setVerticalVelocity(0);
-			}
-		}
-		
-	};
-	
-
 	/**
 	 * 
 	 * This constructor will set the Legs, Pixel Position, Actual Position, Dimension and the images to show the animation
@@ -417,9 +374,9 @@ public class Spider extends Organism implements Run, Jump{
 			for(Organism object: objects) {
 				int type = getGameObjectType(object);
 				switch(type) {
-				case 0:hitHandler.arrangeMazubHit(dt);break;
-				case 3:hitHandler.arrangeSlimeHit(dt);break;
-				case 4:hitHandler.arrangeSharkHit(dt);break;
+				case 0:arrangeMazubHit(dt);break;
+				case 3:arrangeSlimeHit(dt);break;
+				case 4:arrangeSharkHit(dt);break;
 				case 5:if(object instanceof Spider && object.getBlockTime() == 0) {
 					if(isRunning()) endRun(dt);
 					if(isJumping() || isFalling()) endJump(dt);
@@ -575,6 +532,40 @@ public class Spider extends Organism implements Run, Jump{
 
 	public void setTime(double time) {
 		this.time = time;
+	}
+	
+	public void arrangeMazubHit(double dt) {
+		setLegs(getLegs() - 1);
+		if(isRunning()) {
+			kinematics.setHorizontalVelocity(0);
+		}
+		if(isJumping() || isFalling()) {
+			kinematics.setVerticalAcceleration(0);
+			kinematics.setVerticalVelocity(0);
+		}
+	}
+
+	public void arrangeSlimeHit(double dt) {
+		setTime(getTime() + dt);
+		if(getTime() >= 0.5) {
+			setLegs(getLegs() + 1);
+			setTime(0.0);
+		}
+	}
+
+	public void arrangeSharkHit(double dt) {
+		if(getBlockTime() == 0)setLegs(getLegs()/2);
+		setBlockTime(getBlockTime() + dt);
+		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
+			setBlockTime(0.0);
+		}
+		if(isRunning()) {
+			kinematics.setHorizontalVelocity(0);
+		}
+		if(isJumping() || isFalling()) {
+			kinematics.setVerticalAcceleration(0);
+			kinematics.setVerticalVelocity(0);
+		}
 	}
 	
 }

@@ -30,63 +30,6 @@ public class Mazub extends Creature implements Run, Jump{
 	private static final double Y_ACC = -10.0;
 	private static final double SPRITE_CHANGE = 0.075;
 	
-	private MazubHitHandler hitHandler = new MazubHitHandler() {
-		
-		@Override
-		public void arrangeSlimeHit(double dt) {
-			if(isRunning() && getBlockTime() == 0) setHitPoints((int) Constant.MAZUB_SLIME.getValue());
-			setBlockTime(getBlockTime() + dt);
-			if(getBlockTime() >= Constant.TIMEOUT.getValue()) setBlockTime(0.0);
-		}
-		
-		@Override
-		public void arrangeSneezeHit(Sneezewort sneezewort, double dt) {
-			if(getHitPoints() < hitPoint.getMaximum() && getRectangle().overlaps(sneezewort.getRectangle())) { 
-				if(sneezewort.getAge() < Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
-					setHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
-				}else if(sneezewort.getAge() >= Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
-					setHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
-				}
-				sneezewort.terminate();
-			}
-		}
-		
-		@Override
-		public void arrangeSkullHit(Skullcab skullcab, double dt) {
-			if(!skullcab.getRectangle().overlaps(getRectangle())) {
-				skullcab.setHitTime(0); return;
-			}
-			if(skullcab.getHitTime() == 0 && skullcab.getHit() != 0 && getHitPoints() < hitPoint.getMaximum() ) {
-				if(skullcab.isDead()) {
-					setHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
-				}else {
-					setHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
-				}
-				skullcab.getHitPoint().setPoints(-1);
-			}
-			skullcab.setHitTime(skullcab.getHitTime() + dt);
-			if(skullcab.getHitTime()  >= 0.6) {
-				skullcab.setHitTime(0);
-			}
-			if(skullcab.getHit() == 0) skullcab.terminate();
-		}
-		
-		@Override
-		public void arrangeSharkHit(double dt) {
-			if(getBlockTime() == 0) setHitPoints((int) Constant.MAZUB_SHARK.getValue());
-			setBlockTime(getBlockTime() + dt);
-			if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
-				setBlockTime(0.0);
-			}
-		}
-
-		@Override
-		public void arrangeSpiderHit() {
-			setHitPoints((int) Constant.MAZUB_SPIDER.getValue());
-		}
-	};
-	
-	
 	/**
 	 * This constructor will set the HitPoint, Pixel Position, Actual Position, Dimension and the images to show the animation
 	 * 
@@ -643,11 +586,11 @@ public class Mazub extends Creature implements Run, Jump{
 			for(Organism object: objects) {
 				int type = getGameObjectType(object);
 				switch(type) {
-				case 1:hitHandler.arrangeSneezeHit((Sneezewort) object, dt); break;
-				case 2:hitHandler.arrangeSkullHit((Skullcab) object, dt); break;
-				case 3:hitHandler.arrangeSlimeHit(dt); break;
-				case 4:hitHandler.arrangeSharkHit(dt); break;
-				case 5:hitHandler.arrangeSpiderHit(); break;
+				case 1:arrangeSneezeHit((Sneezewort) object, dt); break;
+				case 2:arrangeSkullHit((Skullcab) object, dt); break;
+				case 3:arrangeSlimeHit(dt); break;
+				case 4:arrangeSharkHit(dt); break;
+				case 5:arrangeSpiderHit(); break;
 				default: break;
 				}
 			}
@@ -882,6 +825,54 @@ public class Mazub extends Creature implements Run, Jump{
 			kinematics.setVerticalAcceleration(0.0);
 			kinematics.setVerticalVelocity(0.0);
 		}
+	}
+	
+	public void arrangeSlimeHit(double dt) {
+		if(isRunning() && getBlockTime() == 0) setHitPoints((int) Constant.MAZUB_SLIME.getValue());
+		setBlockTime(getBlockTime() + dt);
+		if(getBlockTime() >= Constant.TIMEOUT.getValue()) setBlockTime(0.0);
+	}
+	
+	public void arrangeSneezeHit(Sneezewort sneezewort, double dt) {
+		if(getHitPoints() < hitPoint.getMaximum() && getRectangle().overlaps(sneezewort.getRectangle())) { 
+			if(sneezewort.getAge() < Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
+				setHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
+			}else if(sneezewort.getAge() >= Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
+				setHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
+			}
+			sneezewort.terminate();
+		}
+	}
+	
+	public void arrangeSkullHit(Skullcab skullcab, double dt) {
+		if(!skullcab.getRectangle().overlaps(getRectangle())) {
+			skullcab.setHitTime(0); return;
+		}
+		if(skullcab.getHitTime() == 0 && skullcab.getHit() != 0 && getHitPoints() < hitPoint.getMaximum() ) {
+			if(skullcab.isDead()) {
+				setHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
+			}else {
+				setHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
+			}
+			skullcab.getHitPoint().setPoints(-1);
+		}
+		skullcab.setHitTime(skullcab.getHitTime() + dt);
+		if(skullcab.getHitTime()  >= 0.6) {
+			skullcab.setHitTime(0);
+		}
+		if(skullcab.getHit() == 0) skullcab.terminate();
+	}
+	
+	public void arrangeSharkHit(double dt) {
+		if(getBlockTime() == 0) setHitPoints((int) Constant.MAZUB_SHARK.getValue());
+		setBlockTime(getBlockTime() + dt);
+		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
+			setBlockTime(0.0);
+		}
+	}
+
+	public void arrangeSpiderHit() {
+		setHitPoints((int) Constant.MAZUB_SPIDER.getValue());
 	}
 
 }
