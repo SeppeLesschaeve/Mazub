@@ -157,10 +157,10 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	public void startRunRight() {
 		assert(!isRunning() && !isDead());
-		super.setSprite(8);
 		setAcceleration(X_ACC, kinematics.getVerticalAcceleration());
 		setVelocity( MIN_X_VELOCITY , kinematics.getVerticalVelocity());
 		kinematics.setBoundsOfHorizontalBoundaries(MIN_X_VELOCITY, MAX_X_VELOCITY);
+		super.setSprite(8);
 	}
 	
 	/**
@@ -178,7 +178,7 @@ public class Mazub extends Creature implements Run, Jump{
 		assert(!isRunning() && !isDead());
 		setAcceleration(-X_ACC, kinematics.getVerticalAcceleration());
 		setVelocity( -MIN_X_VELOCITY , kinematics.getVerticalVelocity());
-		kinematics.setBoundsOfHorizontalBoundaries(MIN_X_VELOCITY, MAX_X_VELOCITY);
+		kinematics.setBoundsOfHorizontalBoundaries(-MIN_X_VELOCITY, -MAX_X_VELOCITY);
 		super.setSprite(((super.getSprites().length - 8) /2 ) + 8);
 	}
 	
@@ -337,19 +337,19 @@ public class Mazub extends Creature implements Run, Jump{
 		if(!canStopDuck()) return;
 		setSpriteTime(0.0);
 		if (getOrientation() == 1) {
-			if(canStopDuck()) super.setSprite(8); else super.setSprite(6);
+			super.setSprite(8);
 			setVelocity(MIN_X_VELOCITY, 0.0);
 			kinematics.setBoundsOfHorizontalBoundaries(MIN_X_VELOCITY, MAX_X_VELOCITY);
 			setAcceleration(X_ACC, 0.0);
 		}
 		if (getOrientation() == -1) {
-			if(canStopDuck()) super.setSprite(((super.getSprites().length-8)/2) + 8); else super.setSprite(7);
+			super.setSprite(((super.getSprites().length-8)/2) + 8);
 			setVelocity(-MIN_X_VELOCITY, 0.0);
-			kinematics.setBoundsOfHorizontalBoundaries(MIN_X_VELOCITY, MAX_X_VELOCITY);
+			kinematics.setBoundsOfHorizontalBoundaries(-MIN_X_VELOCITY, -MAX_X_VELOCITY);
 			setAcceleration(-X_ACC, 0.0);
 		}
 		if (getOrientation() == 0) {
-			if(canStopDuck()) super.setSprite(0); else super.setSprite(1);
+			super.setSprite(0);
 			setAcceleration(0.0, 0.0);
 			setVelocity(0.0, 0.0);
 		}
@@ -590,7 +590,7 @@ public class Mazub extends Creature implements Run, Jump{
 				case 2:arrangeSkullHit((Skullcab) object, dt); break;
 				case 3:arrangeSlimeHit(dt); break;
 				case 4:arrangeSharkHit(dt); break;
-				case 5:arrangeSpiderHit(); break;
+				case 5:arrangeSpiderHit(dt); break;
 				default: break;
 				}
 			}
@@ -662,8 +662,8 @@ public class Mazub extends Creature implements Run, Jump{
 	public Feature getDominantFeature() {
 		if(getWorld() == null) return Feature.AIR;
 		Feature feature = Feature.AIR;
-		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth()-1; pixelX++) {
-			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight()-1; pixelY++) {
+		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth()-1; pixelX+= Math.min(getRectangle().getXCoordinate()+super.getRectangle().getWidth()+pixelX-1, getWorld().getTileLength())) {
+			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight()-1; pixelY+= Math.min(getRectangle().getYCoordinate()+super.getRectangle().getHeight()+pixelY-1, getWorld().getTileLength())) {
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) return Feature.MAGMA;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.GAS) feature = Feature.GAS;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER && feature != Feature.GAS) feature = Feature.WATER;
@@ -828,7 +828,7 @@ public class Mazub extends Creature implements Run, Jump{
 	}
 	
 	public void arrangeSlimeHit(double dt) {
-		if(isRunning() && getBlockTime() == 0) setHitPoints((int) Constant.MAZUB_SLIME.getValue());
+		if(getBlockTime() == 0) updateHitPoints((int) Constant.MAZUB_SLIME.getValue());
 		setBlockTime(getBlockTime() + dt);
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) setBlockTime(0.0);
 	}
@@ -836,9 +836,9 @@ public class Mazub extends Creature implements Run, Jump{
 	public void arrangeSneezeHit(Sneezewort sneezewort, double dt) {
 		if(getHitPoints() < hitPoint.getMaximum() && getRectangle().overlaps(sneezewort.getRectangle())) { 
 			if(sneezewort.getAge() < Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
-				setHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
+				updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
 			}else if(sneezewort.getAge() >= Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
-				setHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
+				updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
 			}
 			sneezewort.terminate();
 		}
@@ -850,11 +850,11 @@ public class Mazub extends Creature implements Run, Jump{
 		}
 		if(skullcab.getHitTime() == 0 && skullcab.getHit() != 0 && getHitPoints() < hitPoint.getMaximum() ) {
 			if(skullcab.isDead()) {
-				setHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
+				updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
 			}else {
-				setHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
+				updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
 			}
-			skullcab.getHitPoint().setPoints(-1);
+			skullcab.getHitPoint().updatePoints(-1);
 		}
 		skullcab.setHitTime(skullcab.getHitTime() + dt);
 		if(skullcab.getHitTime()  >= 0.6) {
@@ -864,15 +864,19 @@ public class Mazub extends Creature implements Run, Jump{
 	}
 	
 	public void arrangeSharkHit(double dt) {
-		if(getBlockTime() == 0) setHitPoints((int) Constant.MAZUB_SHARK.getValue());
+		if(getBlockTime() == 0) updateHitPoints((int) Constant.MAZUB_SHARK.getValue());
 		setBlockTime(getBlockTime() + dt);
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 			setBlockTime(0.0);
 		}
 	}
 
-	public void arrangeSpiderHit() {
-		setHitPoints((int) Constant.MAZUB_SPIDER.getValue());
+	public void arrangeSpiderHit(double dt) {
+		if(getBlockTime() == 0) updateHitPoints((int) Constant.MAZUB_SPIDER.getValue());
+		setBlockTime(getBlockTime() + dt);
+		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
+			setBlockTime(0.0);
+		}
 	}
 
 }

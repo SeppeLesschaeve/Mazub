@@ -402,7 +402,7 @@ public class Shark extends Creature implements Run, Jump{
 		if(!swimsInWater()) {
 			setOutWaterTime(getOutWaterTime() + dt);
 			if(getOutWaterTime() >= Constant.SHARK_OUT_WATER_TIME.getValue()) {
-				super.setHitPoints((int) Constant.SHARK_OUT_WATER.getValue());
+				super.updateHitPoints((int) Constant.SHARK_OUT_WATER.getValue());
 				setOutWaterTime(0.0);
 			}
 		}else setOutWaterTime(0.0);
@@ -505,7 +505,7 @@ public class Shark extends Creature implements Run, Jump{
 	}
 	
 	public void arrangeMazubHit(double dt) {
-		if(getBlockTime() == 0) setHitPoints((int) Constant.SHARK_MAZUB.getValue());
+		if(getBlockTime() == 0) updateHitPoints((int) Constant.SHARK_MAZUB.getValue());
 		setBlockTime(getBlockTime() + dt);
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 			setBlockTime(0.0);
@@ -513,7 +513,7 @@ public class Shark extends Creature implements Run, Jump{
 	}
 	
 	public void arrangeSlimeHit(double dt) {
-		if(getBlockTime() == 0) setHitPoints((int) Constant.SHARK_SLIME.getValue());
+		if(getBlockTime() == 0) updateHitPoints((int) Constant.SHARK_SLIME.getValue());
 		setBlockTime(getBlockTime() + dt);
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 			setBlockTime(0.0);

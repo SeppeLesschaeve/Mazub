@@ -27,27 +27,27 @@ public class MazubFeatureHandler implements FeatureHandler{
 
 	public void handleMagmaHit(double time) {
 		if(featureTime == 0.0 && previousFeature != Feature.MAGMA) {
-			mazub.setHitPoints((int) Constant.MAZUB_MAGMA.getValue());
+			mazub.updateHitPoints((int) Constant.MAZUB_MAGMA.getValue());
 			featureTime += time;
 		}else {
 			featureTime += time; 
-			if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) mazub.setHitPoints((int) Constant.MAZUB_MAGMA.getValue());
+			if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) mazub.updateHitPoints((int) Constant.MAZUB_MAGMA.getValue());
 		}
 	}
 
 	public void handleGasHit(double time) {
 		if(featureTime == 0.0 && previousFeature != Feature.GAS) {
-			mazub.setHitPoints((int) Constant.MAZUB_GAS.getValue());
+			mazub.updateHitPoints((int) Constant.MAZUB_GAS.getValue());
 			featureTime += time;
 		}else {
 			featureTime += time; 
-			if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) mazub.setHitPoints((int) Constant.MAZUB_GAS.getValue());
+			if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) mazub.updateHitPoints((int) Constant.MAZUB_GAS.getValue());
 		}
 	}
 
 	public void handleWaterHit(double time) {
 		featureTime += time; 
-		if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) mazub.setHitPoints((int) Constant.MAZUB_WATER.getValue());
+		if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) mazub.updateHitPoints((int) Constant.MAZUB_WATER.getValue());
 	}
 
 }

@@ -92,7 +92,7 @@ public abstract class Organism extends GameObject{
 
 		@Override
 		public void setMaximumHorizontalVelocity(double max) {
-			if(max < getMinimumHorizontalVelocity()) this.maximumHorizontalVelocity = getMinimumHorizontalVelocity();
+			if(Math.abs(max) < Math.abs(getMinimumHorizontalVelocity())) this.maximumHorizontalVelocity = getMinimumHorizontalVelocity();
 			else this.maximumHorizontalVelocity = max;
 		}
 
@@ -104,10 +104,10 @@ public abstract class Organism extends GameObject{
 		
 		@Override
 		public void enforceHorizontalBoundaries() {
-			if(Math.abs(horizontalVelocity) < getMinimumHorizontalVelocity()) {
+			if(Math.abs(horizontalVelocity) < Math.abs(getMinimumHorizontalVelocity())) {
 				setHorizontalVelocity(getMinimumHorizontalVelocity()*Math.signum(horizontalVelocity));
 			}
-			if(Math.abs(horizontalVelocity) > getMaximumHorizontalVelocity()) {
+			if(Math.abs(horizontalVelocity) > Math.abs(getMaximumHorizontalVelocity())) {
 				setHorizontalVelocity(getMaximumHorizontalVelocity()*Math.signum(horizontalVelocity));
 			}
 		}
@@ -183,9 +183,9 @@ public abstract class Organism extends GameObject{
 				((Slime) this).getSchool().removeSlime(((Slime) this));
 		}
 		if(this instanceof Creature && ((Creature)this).getHitPoints() != 0) 
-			((Creature) this).setHitPoints(-((Creature)this).getHitPoints());
+			((Creature) this).updateHitPoints(-((Creature)this).getHitPoints());
 		if(this instanceof Plant && ((Plant)this).getHit() != 0) 
-			((Plant) this).getHitPoint().setPoints(-((Plant)this).getHit());
+			((Plant) this).getHitPoint().updatePoints(-((Plant)this).getHit());
 		if(this instanceof Spider) ((Spider) this).setLegs(0);
 		if(getWorld() == null) return;
 		if(this == getWorld().getPlayer()) this.getWorld().unsetPlayer();

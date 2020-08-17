@@ -26,8 +26,8 @@ public abstract class Creature extends Organism {
 		return hitPoint.getPoints();
 	}
 	
-	protected void setHitPoints(int points) {
-		this.hitPoint.setPoints(points);
+	protected void updateHitPoints(int points) {
+		this.hitPoint.updatePoints(points);
 	}
 
 	@Basic @Override

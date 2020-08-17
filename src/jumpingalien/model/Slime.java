@@ -247,8 +247,8 @@ public class Slime extends Creature implements Run{
 		if(!canHaveAsNewSchool(school)) throw new IllegalArgumentException("You can not use this school as new school for this slime");
 		for(Slime oldSchoolSlime: this.getSchool().getSlimes()) {
 			if(oldSchoolSlime != this) {
-				this.setHitPoints(-1);
-				oldSchoolSlime.setHitPoints(1);
+				this.updateHitPoints(-1);
+				oldSchoolSlime.updateHitPoints(1);
 			}
 		}
 		if(getWorld() != null) {
@@ -256,8 +256,8 @@ public class Slime extends Creature implements Run{
 		}
 		for(Slime newSchoolSlime: this.getSchool().getSlimes()) {
 			if(newSchoolSlime != this) {
-				newSchoolSlime.setHitPoints(-1);
-				this.setHitPoints(1);
+				newSchoolSlime.updateHitPoints(-1);
+				this.updateHitPoints(1);
 			}
 		}
 	}
@@ -282,7 +282,7 @@ public class Slime extends Creature implements Run{
 	 */
 	protected void synchronizeSchool() {
 		if(getSchool() == null) return;
-		getSchool().getSlimes().stream().filter(slime -> slime != this).forEach(slime -> slime.setHitPoints(-1));
+		getSchool().getSlimes().stream().filter(slime -> slime != this).forEach(slime -> slime.updateHitPoints(-1));
 	}
 
 	/**
@@ -319,8 +319,8 @@ public class Slime extends Creature implements Run{
 	 */
 	@Override
 	public void endRun(double deltaT) {
-		if(getOrientation() == -1 && !super.getWorld().shallBePassable(super.getLeftBorder())||
-				getOrientation() == 1 && !super.getWorld().shallBePassable(super.getRightBorder())) {
+		if((getOrientation() == -1 && !super.getWorld().shallBePassable(super.getLeftBorder()))||
+				(getOrientation() == 1 && !super.getWorld().shallBePassable(super.getRightBorder()))) {
 			kinematics.setHorizontalAcceleration(0.0);
 			kinematics.setHorizontalVelocity(0.0);
 		} 
@@ -330,6 +330,8 @@ public class Slime extends Creature implements Run{
 		for(Organism object: objects) {
 			if(object instanceof Slime && object != this) {
 				arrangeSwitch((Slime)object); break;
+			}else {
+				kinematics.setHorizontalVelocity(0.0);
 			}
 		}
 	}
@@ -439,15 +441,15 @@ public class Slime extends Creature implements Run{
 	private void arrangeFeatureHit(double dt) {
 		if(getHitPoints() == 0) return;
 		Boolean[] features =  getFeatureScore();
-		if(features[0]) {super.setHitPoints(-getHitPoints()); return;}
+		if(features[0]) {super.updateHitPoints(-getHitPoints()); return;}
 		if(features[1]) {
 			setGasTime(getGasTime() + dt); 
-			if(getGasTime() >= Constant.SLIME_GAS_TIME.getValue()) super.setHitPoints((int) Constant.SLIME_GAS.getValue());
+			if(getGasTime() >= Constant.SLIME_GAS_TIME.getValue()) super.updateHitPoints((int) Constant.SLIME_GAS.getValue());
 		}else { setGasTime(0.0);}
 		if(features[2]) {
 			setWaterTime(getWaterTime() + dt); 
 				if(getWaterTime() >= Constant.SLIME_WATER_TIME.getValue()) { 
-					super.setHitPoints((int) Constant.SLIME_WATER.getValue()); synchronizeSchool();}
+					super.updateHitPoints((int) Constant.SLIME_WATER.getValue()); synchronizeSchool();}
 		}else { setWaterTime(0.0);}
 		if(getGasTime() >= Constant.SLIME_GAS_TIME.getValue()) setGasTime(0.0);
 		if(getWaterTime() >= Constant.SLIME_WATER_TIME.getValue()) setWaterTime(0.0);
@@ -510,8 +512,8 @@ public class Slime extends Creature implements Run{
 	}
 	
 	public void arrangeMazubHit(double dt) {
-		if(isRunning() && getBlockTime() == 0) {
-			setHitPoints((int) Constant.SLIME_MAZUB.getValue());
+		if(getBlockTime() == 0) {
+			updateHitPoints((int) Constant.SLIME_MAZUB.getValue());
 			synchronizeSchool();
 		}
 		setBlockTime(getBlockTime() + dt);
@@ -521,7 +523,7 @@ public class Slime extends Creature implements Run{
 	}
 
 	public void arrangeSharkHit(double dt) {
-		if(getBlockTime() == 0) setHitPoints(-getHitPoints());
+		if(getBlockTime() == 0) updateHitPoints(-getHitPoints());
 		setBlockTime(getBlockTime() + dt);
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 			setBlockTime(0.0);

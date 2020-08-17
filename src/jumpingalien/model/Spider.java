@@ -457,8 +457,8 @@ public class Spider extends Organism implements Run, Jump{
 	@Basic
 	public boolean isInContactWithMagma() {
 		if(getWorld() == null) {return false;}
-		for(int pixelX = super.getRectangle().getXCoordinate() - 1; pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth(); pixelX++) {
-			for(int pixelY= super.getRectangle().getYCoordinate() - 1; pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight(); pixelY++) {
+		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth(); pixelX++) {
+			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight(); pixelY++) {
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) {return true;}
 			}
 		}

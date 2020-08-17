@@ -21,6 +21,10 @@ public class HitPoint {
 	}
 	
 	protected void setPoints(int points) {
+		this.points = points;
+	}
+	
+	public void updatePoints(int points) {
 		this.points += points;
 		if(this.getPoints() < this.getMinimum()) {
 			this.points = minimum;
