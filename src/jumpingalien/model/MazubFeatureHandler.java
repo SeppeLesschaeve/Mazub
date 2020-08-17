@@ -12,7 +12,7 @@ public class MazubFeatureHandler implements FeatureHandler{
 	}
 
 	@Override
-	public <T extends GameObject> void handleFeatureHit(T object, double time) {
+	public <T extends Organism> void handleFeatureHit(T object, double time) {
 		if(mazub.getHitPoints() == 0) return;
 		Feature feature = mazub.getDominantFeature();
 		if(feature != previousFeature) {

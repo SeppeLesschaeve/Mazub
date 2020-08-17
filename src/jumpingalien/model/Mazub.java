@@ -10,9 +10,9 @@ import jumpingalien.util.Sprite;
  * This class holds a (playable) alien that is able to run, duck and jump
  * 
  * @invar The horizontal velocity will never be bigger than the maximum horizontal velocity
- * 		| getVelocity().getX() <= Math.abs(getVelocity().getMaxX())
+ * 		| kinematics.getHorizontalVelocity() <= Math.abs(getVelocity().getMaxX())
  * @invar The vertical velocity will never be bigger than the maximum vertical velocity
- * 		| getVelocity().getY() <= getVelocity().getMaxY()
+ * 		| kinematics.getVerticalVelocity() <= getVelocity().getMaxY()
  *                     
  * @version 4.0
  * @author Seppe Lesschaeve (Informatica)
@@ -36,12 +36,12 @@ public class Mazub extends Creature implements Run, Jump{
 		public void arrangeSlimeHit(double dt) {
 			if(isRunning() && getBlockTime() == 0) setHitPoints((int) Constant.MAZUB_SLIME.getValue());
 			setBlockTime(getBlockTime() + dt);
-			if(getBlockTime() >= Constant.BLOCK.getValue()) setBlockTime(0.0);
+			if(getBlockTime() >= Constant.TIMEOUT.getValue()) setBlockTime(0.0);
 		}
 		
 		@Override
 		public void arrangeSneezeHit(Sneezewort sneezewort, double dt) {
-			if(getHitPoints() < getHitPoint().getMaximumAmountOfPoints() && getRectangle().overlaps(sneezewort.getRectangle())) { 
+			if(getHitPoints() < hitPoint.getMaximum() && getRectangle().overlaps(sneezewort.getRectangle())) { 
 				if(sneezewort.getAge() < Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
 					setHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
 				}else if(sneezewort.getAge() >= Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
@@ -56,7 +56,7 @@ public class Mazub extends Creature implements Run, Jump{
 			if(!skullcab.getRectangle().overlaps(getRectangle())) {
 				skullcab.setHitTime(0); return;
 			}
-			if(skullcab.getHitTime() == 0 && skullcab.getHit() != 0 && getHitPoints() < getHitPoint().getMaximumAmountOfPoints() ) {
+			if(skullcab.getHitTime() == 0 && skullcab.getHit() != 0 && getHitPoints() < hitPoint.getMaximum() ) {
 				if(skullcab.isDead()) {
 					setHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
 				}else {
@@ -75,7 +75,7 @@ public class Mazub extends Creature implements Run, Jump{
 		public void arrangeSharkHit(double dt) {
 			if(getBlockTime() == 0) setHitPoints((int) Constant.MAZUB_SHARK.getValue());
 			setBlockTime(getBlockTime() + dt);
-			if(getBlockTime() >= Constant.BLOCK.getValue()) {
+			if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 				setBlockTime(0.0);
 			}
 		}
@@ -118,7 +118,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	@Basic
 	public int[] getPixelPosition() {
-		return new int[] {super.getOrigin().getX(),super.getOrigin().getY()};
+		return new int[] {super.getRectangle().getOrigin().getX(),super.getRectangle().getOrigin().getY()};
 	}
 	
 	/**
@@ -138,7 +138,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	protected void setPixelPosition(int x, int y) throws IllegalArgumentException{
 		if( x < 0 || y < 0) throw new IllegalArgumentException("The coordinates must be positive");
-		super.getOrigin().setPosition(x, y);
+		super.getRectangle().getOrigin().setPosition(x, y);
 	}
 	
 	/**
@@ -162,8 +162,8 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	@Basic @Override
 	public int getOrientation() {
-		if(super.getIndex() == 2) return Orientation.POSITIVE.getValue();
-		if(super.getIndex() == 3) return  Orientation.NEGATIVE.getValue();
+		if(super.getIndex() == 2) return 1;
+		if(super.getIndex() == 3) return  -1;
 		return super.getOrientation();
 	}
 	
@@ -180,8 +180,8 @@ public class Mazub extends Creature implements Run, Jump{
 	 * 		| getVelocity().setY(y)
 	 */
 	public void setVelocity(double x, double y) {
-		getVelocity().setX(x);
-		getVelocity().setY(y);
+		kinematics.setHorizontalVelocity(x);
+		kinematics.setVerticalVelocity(y);
 	}
 	
 	/**
@@ -197,8 +197,8 @@ public class Mazub extends Creature implements Run, Jump{
 	 *		|getAcceleration().setY(y)
 	 */
 	public void setAcceleration(double x, double y) {
-		getAcceleration().setX(x);
-		getAcceleration().setY(y);
+		kinematics.setHorizontalAcceleration(x);
+		kinematics.setVerticalAcceleration(y);
 	}
 	
 	/**
@@ -215,10 +215,9 @@ public class Mazub extends Creature implements Run, Jump{
 	public void startRunRight() {
 		assert(!isRunning() && !isDead());
 		super.setSprite(8);
-		setAcceleration(X_ACC, super.getAcceleration().getY());
-		setVelocity( MIN_X_VELOCITY , super.getVelocity().getY());
-		getVelocity().setBoundsOfVelocity(MIN_X_VELOCITY, MAX_X_VELOCITY);
-		super.setBorders();
+		setAcceleration(X_ACC, kinematics.getVerticalAcceleration());
+		setVelocity( MIN_X_VELOCITY , kinematics.getVerticalVelocity());
+		kinematics.setBoundsOfHorizontalBoundaries(MIN_X_VELOCITY, MAX_X_VELOCITY);
 	}
 	
 	/**
@@ -234,11 +233,10 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	public void startRunLeft() {
 		assert(!isRunning() && !isDead());
-		setAcceleration(-X_ACC, super.getAcceleration().getY());
-		setVelocity( -MIN_X_VELOCITY , super.getVelocity().getY());
-		getVelocity().setBoundsOfVelocity(MIN_X_VELOCITY, MAX_X_VELOCITY);
+		setAcceleration(-X_ACC, kinematics.getVerticalAcceleration());
+		setVelocity( -MIN_X_VELOCITY , kinematics.getVerticalVelocity());
+		kinematics.setBoundsOfHorizontalBoundaries(MIN_X_VELOCITY, MAX_X_VELOCITY);
 		super.setSprite(((super.getSprites().length - 8) /2 ) + 8);
-		super.setBorders();
 	}
 	
 	/**
@@ -250,20 +248,18 @@ public class Mazub extends Creature implements Run, Jump{
 	 * 		| if(getOrientation() == Orientation.NEGATIVE) then super.setSprite(3)
 	 *		| if(getOrientation() == Orientation.POSITIVE) then super.setSprite(2)
 	 *		| if(getOrientation() == Orientation.NEUTRAL) then super.setSprite(0)
-	 *		| setVelocity(0.0, getVelocity().getY())
-	 *		| setAcceleration(0.0, getAcceleration().getY())
+	 *		| setVelocity(0.0, kinematics.getVerticalVelocity())
+	 *		| setAcceleration(0.0, kinematics.getVerticalAcceleration())
 	 *		| super.setBorders()
 	 */
 	public void endRun() {
 		assert(isRunning() &&  !isDead());
-		if(getOrientation() == Orientation.NEGATIVE.getValue())  super.setSprite(3);
-		if(getOrientation() == Orientation.POSITIVE.getValue()) super.setSprite(2);
-		if(getOrientation() == Orientation.NEUTRAL.getValue()) super.setSprite(0);
-		setVelocity(0.0, getVelocity().getY());
-		setAcceleration(0.0, getAcceleration().getY());
-		getVelocity().setBoundsOfVelocity(0.0, 0.0);
-		super.getVelocity().enforceBoundaries();
-		super.setBorders();
+		if(getOrientation() == -1)  super.setSprite(3);
+		if(getOrientation() == 1) super.setSprite(2);
+		if(getOrientation() == 0) super.setSprite(0);
+		setVelocity(0.0, kinematics.getVerticalVelocity());
+		setAcceleration(0.0, kinematics.getVerticalAcceleration());
+		kinematics.setBoundsOfHorizontalBoundaries(0.0, 0.0);
 	}
 	
 	/**
@@ -276,19 +272,18 @@ public class Mazub extends Creature implements Run, Jump{
 	 * 		| if(getOrientation() == Orientation.NEGATIVE) then super.setSprite(5)
 	 *		| if(getOrientation() == Orientation.POSITIVE) then super.setSprite(4)
 	 *		| if(getOrientation() == Orientation.NEUTRAL) then super.setSprite(0)
-	 *		| setVelocity(getVelocity().getX(), Y_VELOCITY)
-	 *	    | setAcceleration(getAcceleration().getX(), Y_ACC)
+	 *		| setVelocity(kinematics.getHorizontalVelocity(), Y_VELOCITY)
+	 *	    | setAcceleration(kinematics.getHorizontalAcceleration(), Y_ACC)
 	 *		| super.setBorders()
 	 * 
 	 */
 	public void startJump() throws IllegalStateException{
 		if(isMovingVertically() || isDead()) throw new IllegalStateException("Mazub can not start jumping if he did jump before it.");
-		if(getOrientation() == Orientation.NEGATIVE.getValue())  super.setSprite(5);
-		if(getOrientation() == Orientation.POSITIVE.getValue()) super.setSprite(4);
-		if(getOrientation() == Orientation.NEUTRAL.getValue()) super.setSprite(0);
-		setVelocity(getVelocity().getX(), Y_VELOCITY);
-		setAcceleration(getAcceleration().getX(), Y_ACC);
-		super.setBorders();
+		if(getOrientation() == -1)  super.setSprite(5);
+		if(getOrientation() == 1) super.setSprite(4);
+		if(getOrientation() == 0) super.setSprite(0);
+		setVelocity(kinematics.getHorizontalVelocity(), Y_VELOCITY);
+		setAcceleration(kinematics.getHorizontalAcceleration(), Y_ACC);
 	}
 	
 	/**
@@ -298,23 +293,22 @@ public class Mazub extends Creature implements Run, Jump{
 	 * 		If Mazub is considered not jumping or dead
 	 * 		| (!isMovingVertically() || isDead())
 	 * @post The velocity, acceleration and sprite will be set based on the orientation
-	 * 		| if(super.getVelocity().getY() > 0) then super.setVelocity(super.getVelocity().getX(), 0.0)
+	 * 		| if(super.kinematics.getVerticalVelocity() > 0) then super.setVelocity(super.kinematics.getHorizontalVelocity(), 0.0)
 	 *		| if(getOrientation() == Orientation.NEGATIVE) then super.setSprite(getSprites().length-8)/2)+8)
 	 *		| if(getOrientation() == Orientation.POSITIVE) then super.setSprite(8)
 	 *		| if(getOrientation() == Orientation.NEUTRAL) then super.setSprite(0)
-	 *		| setAcceleration(getAcceleration().getX(), 0.0)
+	 *		| setAcceleration(kinematics.getHorizontalAcceleration(), 0.0)
 	 *		| super.setBorders()
 	 * 
 	 */
 	public void endJump(){
 		if(!isMovingVertically() || isDead()) throw new IllegalStateException("Mazub can not stop jumping if he didn' t jump before it.");
 		setSpriteTime(0.0);
-		if(super.getVelocity().getY() > 0) setVelocity(getVelocity().getX(), 0.0);
-		if(getOrientation() == Orientation.NEGATIVE.getValue()) super.setSprite(((super.getSprites().length-8)/2) +8);
-		if(getOrientation() == Orientation.POSITIVE.getValue()) super.setSprite(8);
-		if(getOrientation() == Orientation.NEUTRAL.getValue()) super.setSprite(0);
-		setAcceleration(getAcceleration().getX(), 0.0);
-		super.setBorders();
+		if(kinematics.getVerticalVelocity() > 0) setVelocity(kinematics.getHorizontalVelocity(), 0.0);
+		if(getOrientation() == -1) super.setSprite(((super.getSprites().length-8)/2) +8);
+		if(getOrientation() == 1) super.setSprite(8);
+		if(getOrientation() == 0) super.setSprite(0);
+		setAcceleration(kinematics.getHorizontalAcceleration(), 0.0);
 	}
 	
 	/**
@@ -331,52 +325,50 @@ public class Mazub extends Creature implements Run, Jump{
 	 * This method returns whether the alien is jumping or not
 	 * 
 	 * @return True if and only is the alien is moving upwards
-	 * 		| result == super.getVelocity().getY() > 0
+	 * 		| result == super.kinematics.getVerticalVelocity() > 0
 	 */
 	@Basic
 	public boolean isJumping() {
-		return super.getVelocity().getY() > 0;
+		return kinematics.getVerticalVelocity() > 0;
 	}
 	
 	/**
 	 * This method returns whether the alien is falling or not
 	 * 
 	 * @return True if and only is the alien is moving downwards
-	 * 		| result == super.getVelocity().getY() <= 0 && super.getAcceleration().getY() != 0
+	 * 		| result == super.kinematics.getVerticalVelocity() <= 0 && super.kinematics.getVerticalAcceleration() != 0
 	 */
 	@Basic
 	public boolean isFalling() {
-		return super.getVelocity().getY() <= 0 && super.getAcceleration().getY() != 0;
+		return kinematics.getVerticalVelocity() <= 0 && kinematics.getVerticalAcceleration() != 0;
 	}
 	
 	/**
 	 * This method is used to start the duck movement of the alien
 	 * 
 	 * @post The velocity, acceleration and the sprite will be set based on the orientation
-	 *   | if(super.getVelocity().getX() != 0) 
-	 *	 |	  if(getVelocity().getX() < 0) 
-	 *	 |		 then setVelocity(-MIN_X_VELOCITY, getVelocity().getY())
-	 *	 |	  else setVelocity(MIN_X_VELOCITY, getVelocity().getY())
+	 *   | if(super.kinematics.getHorizontalVelocity() != 0) 
+	 *	 |	  if(kinematics.getHorizontalVelocity() < 0) 
+	 *	 |		 then setVelocity(-MIN_X_VELOCITY, kinematics.getVerticalVelocity())
+	 *	 |	  else setVelocity(MIN_X_VELOCITY, kinematics.getVerticalVelocity())
 	 *	 | if(getOrientation() == Orientation.NEUTRAL) then setSprite(1)
 	 *	 | if (getOrientation() == Orientation.POSITIVE) then setSprite(6)
 	 *	 | if (getOrientation() == Orientation.NEGATIVE) then  setSprite(7)
-	 *	 | setAcceleration(0.0, getAcceleration().getY())
+	 *	 | setAcceleration(0.0, kinematics.getVerticalAcceleration())
 	 *	 | super.setborders()
 	 *
 	 */
 	public void startDuck() {
-		if(super.getVelocity().getX() != 0) {
-			if(super.getVelocity().getX() < 0) {
-				setVelocity(-MIN_X_VELOCITY, getVelocity().getY());
-			}else{ setVelocity(MIN_X_VELOCITY, getVelocity().getY());}
-			getVelocity().setBoundsOfVelocity(MIN_X_VELOCITY, MIN_X_VELOCITY);
-			getVelocity().enforceBoundaries();
+		if(kinematics.getHorizontalVelocity() != 0) {
+			if(kinematics.getHorizontalVelocity() < 0) {
+				setVelocity(-MIN_X_VELOCITY, kinematics.getVerticalVelocity());
+			}else{ setVelocity(MIN_X_VELOCITY, kinematics.getVerticalVelocity());}
+			kinematics.setBoundsOfHorizontalBoundaries(MIN_X_VELOCITY, MIN_X_VELOCITY);
 		}
-		if(getOrientation() == Orientation.NEUTRAL.getValue())  super.setSprite(1);
-		if (getOrientation() == Orientation.POSITIVE.getValue()) super.setSprite(6);
-		if (getOrientation() == Orientation.NEGATIVE.getValue())  super.setSprite(7);
-		setAcceleration(0.0, getAcceleration().getY());
-		setBorders();
+		if(getOrientation() == 0)  super.setSprite(1);
+		if (getOrientation() == 1) super.setSprite(6);
+		if (getOrientation() == -1)  super.setSprite(7);
+		setAcceleration(0.0, kinematics.getVerticalAcceleration());
 	}
 	
 	/**
@@ -401,24 +393,23 @@ public class Mazub extends Creature implements Run, Jump{
 	public void endDuck() {
 		if(!canStopDuck()) return;
 		setSpriteTime(0.0);
-		if (getOrientation() == Orientation.POSITIVE.getValue()) {
+		if (getOrientation() == 1) {
 			if(canStopDuck()) super.setSprite(8); else super.setSprite(6);
 			setVelocity(MIN_X_VELOCITY, 0.0);
-			getVelocity().setBoundsOfVelocity(MIN_X_VELOCITY, MAX_X_VELOCITY);
+			kinematics.setBoundsOfHorizontalBoundaries(MIN_X_VELOCITY, MAX_X_VELOCITY);
 			setAcceleration(X_ACC, 0.0);
 		}
-		if (getOrientation() == Orientation.NEGATIVE.getValue()) {
+		if (getOrientation() == -1) {
 			if(canStopDuck()) super.setSprite(((super.getSprites().length-8)/2) + 8); else super.setSprite(7);
 			setVelocity(-MIN_X_VELOCITY, 0.0);
-			getVelocity().setBoundsOfVelocity(MIN_X_VELOCITY, MAX_X_VELOCITY);
+			kinematics.setBoundsOfHorizontalBoundaries(MIN_X_VELOCITY, MAX_X_VELOCITY);
 			setAcceleration(-X_ACC, 0.0);
 		}
-		if (getOrientation() == Orientation.NEUTRAL.getValue()) {
+		if (getOrientation() == 0) {
 			if(canStopDuck()) super.setSprite(0); else super.setSprite(1);
 			setAcceleration(0.0, 0.0);
 			setVelocity(0.0, 0.0);
 		}
-		setBorders();
 	}
 	
 	/**
@@ -440,11 +431,11 @@ public class Mazub extends Creature implements Run, Jump{
 		Rectangle endDuck = null;
 		int toLeft = ((super.getSprites().length-8)/2) + 8;
 		if(super.getIndex() == 6)
-			endDuck = new Rectangle(getOrigin().getX(), getOrigin().getY(), super.getSprites()[8].getWidth(), super.getSprites()[8].getHeight());
+			endDuck = new Rectangle(getRectangle().getXCoordinate(), getRectangle().getYCoordinate(), super.getSprites()[8].getWidth(), super.getSprites()[8].getHeight());
 		if(super.getIndex() == 7)
-			endDuck = new Rectangle(getOrigin().getX(), getOrigin().getY(), getSprites()[toLeft].getWidth(), getSprites()[toLeft].getHeight());
+			endDuck = new Rectangle(getRectangle().getXCoordinate(), getRectangle().getYCoordinate(), getSprites()[toLeft].getWidth(), getSprites()[toLeft].getHeight());
 		if(super.getIndex() == 1)
-			endDuck = new Rectangle(getOrigin().getX(), getOrigin().getY(), super.getSprites()[0].getWidth(), getSprites()[0].getHeight());
+			endDuck = new Rectangle(getRectangle().getXCoordinate(), getRectangle().getYCoordinate(), super.getSprites()[0].getWidth(), getSprites()[0].getHeight());
 		if(getWorld() != null) {
 			return isEmpty(overlappingGameObject(endDuck)) && super.getWorld().shallBePassable(endDuck);
 		}
@@ -460,7 +451,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	@Basic
 	public boolean isDucking() {
-		return getHeight() == super.getSprites()[1].getHeight();
+		return getImageHeight() == super.getSprites()[1].getHeight();
 	}
 
 	/**
@@ -475,7 +466,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 *		| result == true
 	 * 
 	 */
-	private boolean isEmpty(Set<GameObject> objects) {
+	private boolean isEmpty(Set<Organism> objects) {
 		for(GameObject object: objects) {
 			if(!(object instanceof Plant)) return false;
 		}
@@ -501,7 +492,7 @@ public class Mazub extends Creature implements Run, Jump{
 				super.setSprite(0);
 				setEndMoveTime(0.0);
 			}
-			super.getRectangle().setDimension(getWidth(), getHeight());
+			super.getRectangle().setDimension(getImageWidth(), getImageHeight());
 		}
 	}
 	
@@ -522,13 +513,13 @@ public class Mazub extends Creature implements Run, Jump{
 		setSpriteTime(getSpriteTime() + dt);
 		if(getSpriteTime() >= SPRITE_CHANGE) {
 			super.setSprite(super.getIndex() + 1);
-			super.getRectangle().setDimension(getWidth(), getHeight());
+			super.getRectangle().setDimension(getImageWidth(), getImageHeight());
 			setSpriteTime(getSpriteTime() - SPRITE_CHANGE);
 		}
 	}
 
 	public void advanceTime(double deltaT) throws IllegalArgumentException{
-		Position<Integer> position = new Position<>(getOrigin().getX(), getOrigin().getY());
+		Position<Integer> position = new Position<>(getRectangle().getXCoordinate(), getRectangle().getYCoordinate());
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT >= 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
 		if(!isJumping()) needToFallNotJumping();
 		for(double time = 0.0, dt = super.updateDt(deltaT, time); time < deltaT; time += dt, dt = super.updateDt(deltaT, time)) {
@@ -539,7 +530,6 @@ public class Mazub extends Creature implements Run, Jump{
 			if(!canMoveInCurrentState()) setNewState();
 			arrangeMovement(dt);
 			if(super.getIndex() == 2 || super.getIndex() == 3) arrangeEndMove(dt);
-			setBorders();
 		}
 		if(getWorld() != null) super.getWorld().updateWindow(position);
 		arrangeObjectHit(0.0); 
@@ -549,16 +539,16 @@ public class Mazub extends Creature implements Run, Jump{
 	 * This method is used to update the state of the alien if the alien can not advance in current state
 	 * 
 	 * @post If he was running he will stop run and if he was jumping he will stop jumping
-	 * 		| if(super.getAcceleration().getX() == 0.0 && super.getAcceleration().getY() == 0.0) then return
+	 * 		| if(super.kinematics.getHorizontalAcceleration() == 0.0 && super.kinematics.getVerticalAcceleration() == 0.0) then return
 	 *		| if(isRunning() && getOrientation() == Orientation.NEGATIVE.getValue() && !canRunLeft()) then endRun(0.0)
 	 *		| if(isRunning() && getOrientation() == Orientation.POSITIVE.getValue() && !canRunRight()) then endRun(0.0)
 	 *		| if((isJumping() && !canJump()) || (isFalling() && !canFall())) then endJump(0.0)
 	 *
 	 */
 	private void setNewState() {
-		if(super.getAcceleration().getX() == 0.0 && super.getAcceleration().getY() == 0.0) return;
-		if(isRunning() && getOrientation() == Orientation.NEGATIVE.getValue() && !canRunLeft()) endRun(0.0);
-		if(isRunning() && getOrientation() == Orientation.POSITIVE.getValue() && !canRunRight()) endRun(0.0);
+		if(kinematics.getHorizontalAcceleration() == 0.0 && kinematics.getVerticalAcceleration() == 0.0) return;
+		if(isRunning() && getOrientation() == -1 && !canRunLeft()) endRun(0.0);
+		if(isRunning() && getOrientation() == 1 && !canRunRight()) endRun(0.0);
 		if((isJumping() && !canJump()) || (isFalling() && !canFall())) endJump(0.0);
 	}
 
@@ -613,7 +603,7 @@ public class Mazub extends Creature implements Run, Jump{
 	@Override
 	public boolean canFall() {
 		if(getWorld() == null) return true;
-		return isEmpty(super.overlappingGameObject(getDownBorder())) && super.getWorld().shallBePassable(getDown());
+		return isEmpty(super.overlappingGameObject(getDownBorder())) && super.getWorld().shallBePassable(getDownBorder());
 	}
 	
 	/**
@@ -627,8 +617,8 @@ public class Mazub extends Creature implements Run, Jump{
 	 *		|if(isFalling()) result == canFall()
 	 */
 	private boolean canMoveInCurrentState() {
-		if(isRunning() && getOrientation() == Orientation.NEGATIVE.getValue()) return canRunLeft();
-		if(isRunning() && getOrientation() == Orientation.POSITIVE.getValue()) return canRunRight();
+		if(isRunning() && getOrientation() == -1) return canRunLeft();
+		if(isRunning() && getOrientation() == 1) return canRunRight();
 		if(isJumping()) return canJump();
 		if(isFalling()) return canFall();
 		return false;
@@ -648,9 +638,9 @@ public class Mazub extends Creature implements Run, Jump{
 	 *
 	 */
 	protected void arrangeObjectHit(double dt) {
-		Set<GameObject> objects = getCollidingObjects();
+		Set<Organism> objects = getCollidingObjects();
 		if(getWorld() != null) {
-			for(GameObject object: objects) {
+			for(Organism object: objects) {
 				int type = getGameObjectType(object);
 				switch(type) {
 				case 1:hitHandler.arrangeSneezeHit((Sneezewort) object, dt); break;
@@ -677,7 +667,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 * @post If he is not in the Game World anymore he will be terminated 
 	 *		  and if he is just moving the sprite will be updated
 	 *		|if(!super.isInside()) then terminate()
-	 *		|if(isRunning() && !isDucking() && getVelocity().getY() <= 0) then arrangeSpriteChange(dt)
+	 *		|if(isRunning() && !isDucking() && kinematics.getVerticalVelocity() <= 0) then arrangeSpriteChange(dt)
 	 *		
 	 */
 	private void arrangeMovement(double dt) {
@@ -688,7 +678,7 @@ public class Mazub extends Creature implements Run, Jump{
 			endRun(dt); endJump(dt);
 		}
 		if(!super.isInside()) terminate();
-		if(isRunning() && !isDucking() && getVelocity().getY() <= 0) arrangeSpriteChange(dt);
+		if(isRunning() && !isDucking() && kinematics.getVerticalVelocity() <= 0) arrangeSpriteChange(dt);
 	}
 	
 	/**
@@ -698,16 +688,16 @@ public class Mazub extends Creature implements Run, Jump{
 	 * 		|if(getWorld() != null && !isJumping()) 
 	 *		|	if(super.getWorld().shallBePassable(getDownBorder()) && 
 	 *		|		isEmpty(super.overlappingGameObject(getDownBorder())))
-	 *		|		then setAcceleration(getAcceleration().getX(), Y_ACC)
-	 *		|else setAcceleration(getAcceleration().getX(), 0.0)
+	 *		|		then setAcceleration(kinematics.getHorizontalAcceleration(), Y_ACC)
+	 *		|else setAcceleration(kinematics.getHorizontalAcceleration(), 0.0)
 	 *
 	 */
 	private void needToFallNotJumping() {
 		if(getWorld() != null && !isJumping()) {
 			if(super.getWorld().shallBePassable(getDownBorder()) && 
 					isEmpty(super.overlappingGameObject(getDownBorder())))
-					setAcceleration(getAcceleration().getX(), Y_ACC);
-			else setAcceleration(getAcceleration().getX(), 0.0);
+					setAcceleration(kinematics.getHorizontalAcceleration(), Y_ACC);
+			else setAcceleration(kinematics.getHorizontalAcceleration(), 0.0);
 		}
 	}
 	
@@ -729,8 +719,8 @@ public class Mazub extends Creature implements Run, Jump{
 	public Feature getDominantFeature() {
 		if(getWorld() == null) return Feature.AIR;
 		Feature feature = Feature.AIR;
-		for(int pixelX = super.getOrigin().getX(); pixelX < super.getOrigin().getX() + super.getRectangle().getDimension().getWidth(); pixelX++) {
-			for(int pixelY = super.getOrigin().getY(); pixelY < super.getOrigin().getY() + super.getRectangle().getDimension().getHeight(); pixelY++) {
+		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth()-1; pixelX++) {
+			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight()-1; pixelY++) {
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) return Feature.MAGMA;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.GAS) feature = Feature.GAS;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER && feature != Feature.GAS) feature = Feature.WATER;
@@ -810,7 +800,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 * 		| result == super.getSprite().getWidth()
 	 */
 	@Basic 
-	public int getWidth() {
+	public int getImageWidth() {
 		return super.getSprite().getWidth();
 	}
 	
@@ -821,7 +811,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 * 		| result == super.getSprite().getHeight()
 	 */
 	@Basic 
-	public int getHeight() {
+	public int getImageHeight() {
 		return super.getSprite().getHeight();
 	}
 	
@@ -838,7 +828,7 @@ public class Mazub extends Creature implements Run, Jump{
 	@Override @Raw
 	public void run(double deltaT) {
 		updateX(deltaT); 
-		if(!isDucking())super.getVelocity().accelerateX(getAcceleration(), deltaT);
+		if(!isDucking())kinematics.updateHorizontalVelocity(deltaT);
 	}
 
 	/**
@@ -854,10 +844,10 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	@Override
 	public void endRun(double deltaT) {
-		if(getOrientation() == Orientation.POSITIVE.getValue()) setSprite(2);
-		if(getOrientation() == Orientation.NEGATIVE.getValue()) setSprite(3);
-		getAcceleration().setX(0.0);
-		getVelocity().setX(0.0);
+		if(getOrientation() == 1) setSprite(2);
+		if(getOrientation() == -1) setSprite(3);
+		kinematics.setHorizontalAcceleration(0.0);
+		kinematics.setHorizontalVelocity(0.0);
 	}
 
 	/**
@@ -871,7 +861,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	@Override @Raw
 	public void jump(double deltaT){
-		updateY(deltaT);  super.getVelocity().accelerateY(getAcceleration(), deltaT);
+		updateY(deltaT);  kinematics.updateVerticalVelocity(deltaT);
 	}
 
 	/**
@@ -881,15 +871,16 @@ public class Mazub extends Creature implements Run, Jump{
 	 * 			This parameter is unused but must be implemented from interface Jump
 	 * 
 	 * @post The velocity and acceleration will be set based on the fact that he is jumping or not
-	 * 		| if(getVelocity().getY() > 0) then getVelocity().setY(0.0)
+	 * 		| if(kinematics.getVerticalVelocity() > 0) then getVelocity().setY(0.0)
 	 *		| else getAcceleration().setY(0.0) && getVelocity().setY(0.0)
 	 */
 	@Override @Raw
 	public void endJump(double deltaT){
-		if(getVelocity().getY() > 0) 
-			getVelocity().setY(0.0);
+		if(kinematics.getVerticalVelocity() > 0) 
+			kinematics.setVerticalVelocity(0.0);
 		else{ 
-			getAcceleration().setY(0.0); getVelocity().setY(0.0);
+			kinematics.setVerticalAcceleration(0.0);
+			kinematics.setVerticalVelocity(0.0);
 		}
 	}
 

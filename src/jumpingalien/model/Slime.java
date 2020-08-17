@@ -36,7 +36,7 @@ public class Slime extends Creature implements Run{
 				synchronizeSchool();
 			}
 			setBlockTime(getBlockTime() + dt);
-			if(getBlockTime() >= Constant.BLOCK.getValue()) {
+			if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 				setBlockTime(0.0);
 			}
 			
@@ -46,7 +46,7 @@ public class Slime extends Creature implements Run{
 		public void arrangeSharkHit(double dt) {
 			if(getBlockTime() == 0) setHitPoints(-getHitPoints());
 			setBlockTime(getBlockTime() + dt);
-			if(getBlockTime() >= Constant.BLOCK.getValue()) {
+			if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 				setBlockTime(0.0);
 			}
 			
@@ -88,10 +88,8 @@ public class Slime extends Creature implements Run{
 		super(pixelLeftX, pixelBottomY, 100, 0, Integer.MAX_VALUE, sprites);
 		if(sprites.length != 2 || id < 0 || ids.contains(id)) throw new IllegalArgumentException("You must have exactly two images");
 		this.setId(id);
-		super.getAcceleration().setX(X_ACC);
-		super.getAcceleration().setY(0.0);
-		super.getVelocity().setMinX(0.0);
-		super.getVelocity().setMaxX(X_MAX_VELOCITY);
+		kinematics.setHorizontalAcceleration(X_ACC);
+		kinematics.setMaximumHorizontalVelocity(X_MAX_VELOCITY);
 		if(school != null) {
 			school.addSlime(this);
 		}
@@ -326,7 +324,7 @@ public class Slime extends Creature implements Run{
 	 */
 	@Override @Raw
 	public void run(double deltaT) {
-		super.updateX(deltaT); super.getVelocity().accelerateX(getAcceleration(), deltaT);
+		super.updateX(deltaT); kinematics.updateHorizontalVelocity(deltaT);
 	}
 	
 	/**
@@ -348,13 +346,15 @@ public class Slime extends Creature implements Run{
 	 */
 	@Override
 	public void endRun(double deltaT) {
-		if(getOrientation() == Orientation.NEGATIVE.getValue() && !super.getWorld().shallBePassable(super.getLeftBorder())||
-				getOrientation() == Orientation.POSITIVE.getValue() && !super.getWorld().shallBePassable(super.getRightBorder()))
-			 super.getAcceleration().setX(0.0); super.getVelocity().setX(0.0);
-		Set<GameObject> objects = new HashSet<>();
-		if(getOrientation() == Orientation.NEGATIVE.getValue()) objects = super.overlappingGameObject(super.getLeftBorder());
-		if(getOrientation() == Orientation.POSITIVE.getValue()) objects = super.overlappingGameObject(super.getRightBorder());
-		for(GameObject object: objects) {
+		if(getOrientation() == -1 && !super.getWorld().shallBePassable(super.getLeftBorder())||
+				getOrientation() == 1 && !super.getWorld().shallBePassable(super.getRightBorder())) {
+			kinematics.setHorizontalAcceleration(0.0);
+			kinematics.setHorizontalVelocity(0.0);
+		} 
+		Set<Organism> objects = new HashSet<>();
+		if(getOrientation() == -1) objects = super.overlappingGameObject(super.getLeftBorder());
+		if(getOrientation() == 1) objects = super.overlappingGameObject(super.getRightBorder());
+		for(Organism object: objects) {
 			if(object instanceof Slime && object != this) {
 				arrangeSwitch((Slime)object); break;
 			}
@@ -373,18 +373,18 @@ public class Slime extends Creature implements Run{
 	 *		|else if( this.getSchool().getSchool().size() < slime.getSchool().getSchool().size()) then 
 	 *		|	setNewSchool(this, slime.getSchool())
 	 *@post ... 
-	 *		|slime.getAcceleration().setX(-slime.getAcceleration().getX())
-	 *		|this.getAcceleration().setX(-getAcceleration().getX())
+	 *		|slime.getAcceleration().setX(-slime.kinematics.getHorizontalAcceleration())
+	 *		|this.getAcceleration().setX(-kinematics.getHorizontalAcceleration())
 	 *		|slime.getVelocity().setX(0.0)
 	 *		|this.getVelocity().setX(0.0)
 	 *		|setSprite(1- getIndex())
 	 *		|slime.setSprite(1- slime.getIndex())
 	 */
 	private void arrangeSwitch(Slime slime) {
-		slime.getAcceleration().setX(-slime.getAcceleration().getX());
-		this.getAcceleration().setX(-getAcceleration().getX());
-		slime.getVelocity().setX(0.0); 
-		this.getVelocity().setX(0.0);
+		slime.kinematics.setHorizontalAcceleration(-slime.kinematics.getHorizontalAcceleration());
+		this.kinematics.setHorizontalAcceleration(-kinematics.getHorizontalAcceleration());
+		slime.kinematics.setHorizontalVelocity(0.0); 
+		this.kinematics.setHorizontalVelocity(0.0);
 		if(slime.getSchool() != null) {
 			if(slime.getSchool().getSlimes().size() < getSchool().getSlimes().size()) {
 				slime.setNewSchool(this.getSchool());
@@ -423,7 +423,6 @@ public class Slime extends Creature implements Run{
 			arrangeFeatureHit(dt);
 			arrangeObjectHit(dt);
 			arrangeMovement(dt);
-			setBorders();
 		}
 	}
 
@@ -495,9 +494,9 @@ public class Slime extends Creature implements Run{
 	 *
 	 */
 	private void arrangeObjectHit(double dt) {
-		Set<GameObject> objects = getCollidingObjects();
+		Set<Organism> objects = getCollidingObjects();
 		if(getWorld() != null) {
-			for(GameObject object: objects) {
+			for(Organism object: objects) {
 				int type = getGameObjectType(object);
 				switch(type) {
 				case 0: hitHandler.arrangeMazubHit(dt);break;
@@ -527,8 +526,8 @@ public class Slime extends Creature implements Run{
 	public Boolean[] getFeatureScore() {
 		Boolean[] features = new Boolean[] {false, false, false};
 		if(getWorld() == null) return features;
-		for(int pixelX = super.getOrigin().getX(); pixelX < super.getOrigin().getX()+super.getRectangle().getDimension().getWidth(); pixelX++) {
-			for(int pixelY= super.getOrigin().getY(); pixelY < super.getOrigin().getY()+super.getRectangle().getDimension().getHeight(); pixelY++) {
+		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth()-1; pixelX++) {
+			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight()-1; pixelY++) {
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) features[0] = true;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.GAS)   features[1] = true;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER) features[2] = true;

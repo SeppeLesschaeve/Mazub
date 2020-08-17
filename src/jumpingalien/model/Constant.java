@@ -28,7 +28,7 @@ public class Constant {
 	public static final Constant SHARK_SLIME = new Constant(10); 
 	public static final Constant SHARK_OUT_WATER = new Constant(-6); 
 	public static final Constant SHARK_OUT_WATER_TIME = new Constant(0.2);
-	public static final Constant BLOCK = new Constant(0.6); 
+	public static final Constant TIMEOUT = new Constant(0.6); 
 	
 	private double value;
 	

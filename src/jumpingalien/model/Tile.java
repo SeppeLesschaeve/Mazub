@@ -8,7 +8,7 @@ public class Tile {
 	private Feature feature;
 	
 	public Tile(Position<Integer> position, int length, Feature feature) {
-		this(new Rectangle(position, new Dimension(length, length)), feature);
+		this(new Rectangle(position, length, length), feature);
 	}
 	
 	public Tile(Rectangle rectangle, Feature feature) {
@@ -19,11 +19,6 @@ public class Tile {
 	@Basic
 	public Rectangle getRectangle() {
 		return this.rectangle;
-	}
-	
-	protected void setRectangle(Position<Integer> position, Dimension dimension) {
-		this.rectangle.setOrigin(position.getX(), position.getY());
-		this.rectangle.setDimension(dimension.getWidth(), dimension.getHeight());
 	}
 	
 	@Basic

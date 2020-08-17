@@ -56,7 +56,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public int[] getPixelPosition(Mazub alien) throws ModelException {
-		return new int[] {alien.getOrigin().getX(), alien.getOrigin().getY()};
+		return new int[] {alien.getRectangle().getXCoordinate(), alien.getRectangle().getYCoordinate()};
 	}
 	
 	@Override
@@ -66,12 +66,12 @@ public class Facade implements IFacade {
 	
 	@Override
 	public double[] getVelocity(Mazub alien) throws ModelException {
-		return new double[] {alien.getVelocity().getX(), alien.getVelocity().getY()};
+		return alien.getVelocity();
 	}
 	
 	@Override
 	public double[] getAcceleration(Mazub alien) throws ModelException {
-		return new double[] {alien.getAcceleration().getX(), alien.getAcceleration().getY()};
+		return alien.getAcceleration();
 	}
 	
 	@Override
@@ -145,11 +145,11 @@ public class Facade implements IFacade {
 	}
 	
 	public int getHeight(Mazub alien) throws ModelException {
-		return alien.getHeight();
+		return alien.getImageHeight();
 	}
 	
 	public int getWidth(Mazub alien) throws ModelException {
-		return alien.getWidth();
+		return alien.getImageWidth();
 	}
 	
 	@Override
@@ -164,7 +164,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public Sprite getCurrentSprite(Object gameObject) throws ModelException {
-		return ((GameObject) gameObject).getSprite();
+		return ((Organism) gameObject).getSprite();
 	}
 
 	@Override
@@ -215,7 +215,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public boolean hasAsGameObject(Object object, World world) throws ModelException {
-		return world.hasProperGameObject((GameObject)object);
+		return world.hasProperGameObject((Organism)object);
 	}
 	
 	@Override
@@ -233,7 +233,7 @@ public class Facade implements IFacade {
 	@Override
 	public void addGameObject(Object object, World world) throws ModelException {
 		try{
-			world.addGameObject((GameObject)object);
+			world.addGameObject((Organism)object);
 		}catch(NullPointerException nul) {
 			throw new ModelException("You can not use a null as object or world");
 		}catch(IllegalArgumentException ill){
@@ -244,7 +244,7 @@ public class Facade implements IFacade {
 	@Override
 	public void removeGameObject(Object object, World world) throws ModelException {
 		try{
-			world.removeGameObject((GameObject) object);
+			world.removeGameObject((Organism) object);
 		}catch(NullPointerException nul) {
 			throw new ModelException("You can not use a null as object or world");
 		}catch(IllegalArgumentException ill) {
@@ -300,53 +300,53 @@ public class Facade implements IFacade {
 	
 	@Override
 	public void terminateGameObject(Object object) throws ModelException {
-		((GameObject) object).terminate();
+		((Organism) object).terminate();
 	}
 	
 	@Override
 	public boolean isTerminatedGameObject(Object object) throws ModelException {
-		return ((GameObject) object).isTerminated();
+		return ((Organism) object).isTerminated();
 	}
 	
 	@Override
 	public boolean isDeadGameObject(Object object) throws ModelException {
-		return ((GameObject) object).isDead();
+		return ((Organism) object).isDead();
 	}
 	
 	@Override
 	public double[] getActualPosition(Object object) throws ModelException {
-		return new double[] {((GameObject) object).getPosition().getX(), ((GameObject) object).getPosition().getY()};
+		return new double[] {((Organism) object).getPosition().getX(), ((Organism) object).getPosition().getY()};
 	}
 	
 	@Override
 	public void changeActualPosition(Object object, double[] newPosition) throws ModelException {
-		((GameObject) object).changeActualPosition(newPosition);
+		((Organism) object).changeActualPosition(newPosition);
 	}
 	
 	@Override
 	public int[] getPixelPosition(Object object) throws ModelException {
-		return new int[] {((GameObject)object).getOrigin().getX(), ((GameObject)object).getOrigin().getY()};
+		return new int[] {((Organism)object).getRectangle().getXCoordinate(), ((Organism)object).getRectangle().getYCoordinate()};
 	}
 	
 	@Override
 	public int getOrientation(Object object) throws ModelException {
-		return ((GameObject) object).getOrientation();
+		return ((Organism) object).getOrientation();
 	}
 	
 	@Override
 	public double[] getVelocity(Object object) throws ModelException {
-		return new double[] {((GameObject) object).getVelocity().getX(), ((GameObject)object).getVelocity().getY()};
+		return ((Organism) object).getVelocity();
 	}
 	
 	@Override
 	public double[] getAcceleration(Object object) throws ModelException {
-		return new double[] {((GameObject)object).getAcceleration().getX(), ((GameObject)object).getAcceleration().getY()};
+		return ((Organism) object).getAcceleration();
 	}
 	
 	@Override
 	public World getWorld(Object object) throws ModelException {
-		if(object instanceof GameObject) {
-			return ((GameObject) object).getWorld();
+		if(object instanceof Organism) {
+			return ((Organism) object).getWorld();
 		}
 		return ((School) object).getWorld();
 	}
@@ -359,13 +359,13 @@ public class Facade implements IFacade {
 	
 	@Override
 	public Sprite[] getSprites(Object gameObject) throws ModelException {
-		return ((GameObject) gameObject).getSprites();
+		return ((Organism) gameObject).getSprites();
 	}
 	
 	@Override
 	public void advanceTime(Object gameObject, double dt) throws ModelException {
 		try {
-			((GameObject) gameObject).advanceTime(dt);
+			((Organism) gameObject).advanceTime(dt);
 		}catch(IllegalArgumentException ill) {
 			throw new ModelException("You can not advance the time with given parameter");
 		}

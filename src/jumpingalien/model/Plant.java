@@ -11,9 +11,7 @@ import jumpingalien.util.Sprite;
  * @author Seppe Lesschaeve (Informatica)
  *
  */
-public abstract class Plant extends GameObject{
-	
-	private HitPoint hitPoint;
+public abstract class Plant extends Organism{
 	
 	private double age  = 0.0;
 	private double timer = 0.0;
@@ -183,27 +181,17 @@ public abstract class Plant extends GameObject{
 	 * 			This parameter is used as the time that has already been passed
 	 * 
 	 * @post ...
-	 * 		|double result =  0.01 / ( Math.sqrt( Math.pow(getVelocity().getX(), 2) + Math.pow(getVelocity().getY(), 2) ));
+	 * 		|double result =  0.01 / ( Math.sqrt( Math.pow(kinematics.getHorizontalVelocity(), 2) + Math.pow(kinematics.getVerticalVelocity(), 2) ));
 	 * @post ...
 	 * 		|if(time + result > deltaT) then result = deltaT-time
 	 *		|result.equals(result)	
 	 */
 	@Override
 	protected double updateDt(double deltaT, double time) {
-		double result =  0.01 / ( Math.sqrt( Math.pow(getVelocity().getX(), 2) + Math.pow(getVelocity().getY(), 2) ));
+		double result =  0.01 / ( Math.sqrt( Math.pow(kinematics.getHorizontalVelocity(), 2) + Math.pow(kinematics.getVerticalVelocity(), 2) ));
 		if(time + result > deltaT) {
 			result = deltaT-time;
 		}
 		return result;
-	}
-	
-	/**
-	 * This method returns a representation of the acceleration
-	 * 
-	 * @return ...
-	 * 		| result == null
-	 */
-	public Acceleration getAcceleration() {
-		return null;
 	}
 }

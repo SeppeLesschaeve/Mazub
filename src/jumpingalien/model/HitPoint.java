@@ -5,8 +5,8 @@ import be.kuleuven.cs.som.annotate.Basic;
 public class HitPoint {
 	
 	private int points;
-	private int minimum;
-	private int maximum;
+	private int minimum = Integer.MIN_VALUE;
+	private int maximum = Integer.MAX_VALUE;
 	
 	public HitPoint(int points, int minimum, int maximum) {
 		if(minimum > maximum) minimum = maximum;
@@ -22,36 +22,30 @@ public class HitPoint {
 	
 	protected void setPoints(int points) {
 		this.points += points;
-		if(this.getPoints() < this.getMinimumAmountOfPoints()) {
+		if(this.getPoints() < this.getMinimum()) {
 			this.points = minimum;
 		}
-		if(this.getPoints() > this.getMaximumAmountOfPoints()) {
+		if(this.getPoints() > this.getMaximum()) {
 			this.points = maximum;
 		}
 	}
 	
-	@Basic
-	public int getMinimumAmountOfPoints() {
+	public int getMinimum() {
 		return Integer.valueOf(minimum);
 	}
-	
-	protected void setMinimumAmountOfPoints(int minimum) {
-		if(minimum > getMaximumAmountOfPoints()) this.minimum = getMaximumAmountOfPoints();
+
+	public void setMinimum(int minimum) {
+		if(minimum > getMaximum()) this.minimum = getMaximum();
 		else this.minimum = minimum;
 	}
-	
-	@Basic
-	public int getMaximumAmountOfPoints() {
+
+	public int getMaximum() {
 		return Integer.valueOf(maximum);
 	}
-	
-	protected void setMaximumAmountOfPoints(int maximum) {
-		if(maximum < getMinimumAmountOfPoints()) this.maximum = getMinimumAmountOfPoints();
+
+	public void setMaximum(int maximum) {
+		if(maximum < getMinimum()) this.maximum = getMinimum();
 		else this.maximum = maximum;
-	}
-	
-	public HitPoint clone() {
-		return new HitPoint(getPoints(), getMinimumAmountOfPoints(), getMaximumAmountOfPoints());
 	}
 
 }

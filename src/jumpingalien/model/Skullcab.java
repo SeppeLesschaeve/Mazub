@@ -7,7 +7,7 @@ import jumpingalien.util.Sprite;
  * This class builds a Skullcab that can jump at constant velocity
  * 
  * @invar ...
- * 		| getVelocity().getY() <= getVelocity().getMaxY()
+ * 		| kinematics.getVerticalVelocity() <= getVelocity().getMaxY()
  * 
  * @version 4.0
  * @author Seppe Lesschaeve (Informatica)
@@ -51,11 +51,11 @@ public class Skullcab extends Plant implements Jump{
 	 */
 	@Basic
 	public int getOrientation() {
-		if(super.getVelocity().getY() < 0) {
-			return Orientation.NEGATIVE.getValue();
+		if(kinematics.getVerticalVelocity() < 0) {
+			return -1;
 		}
-		if(super.getVelocity().getY() > 0) {
-			return Orientation.POSITIVE.getValue();
+		if(kinematics.getVerticalVelocity() > 0) {
+			return 1;
 		}
 		return 0;
 	}
@@ -69,8 +69,8 @@ public class Skullcab extends Plant implements Jump{
 	 */
 	@Override
 	protected void startMove() {
-		super.getVelocity().setX(0.0);
-		super.getVelocity().setY(Y_VELOCITY);
+		kinematics.setHorizontalVelocity(0.0);
+		kinematics.setVerticalVelocity(Y_VELOCITY);
 	}
 	
 	/**
@@ -167,12 +167,12 @@ public class Skullcab extends Plant implements Jump{
 	 * 			This parameter is unused but must be implemented of the interface Jump
 	 * 
 	 * @post ...
-	 * 		| setTimer(0.0) && super.getVelocity().setY(-super.getVelocity().getY()) && super.setSprite(1-super.getIndex())
+	 * 		| setTimer(0.0) && super.getVelocity().setY(-super.kinematics.getVerticalVelocity()) && super.setSprite(1-super.getIndex())
 	 */
 	@Override @Raw
 	public void endJump(double deltaT){
 		setTimer(0.0); 
-		super.getVelocity().setY(-super.getVelocity().getY()); 
+		kinematics.setVerticalVelocity(-kinematics.getVerticalVelocity()); 
 		super.setSprite(1-super.getIndex());
 	}
 	
@@ -183,13 +183,13 @@ public class Skullcab extends Plant implements Jump{
 	 * 		This parameter is used as time
 	 * 
 	 * @post ...
-	 * 		| super.getPosition().setY(super.getPosition().getY() + super.getVelocity().getY()*deltaT)
+	 * 		| super.getPosition().setY(super.getPosition().getY() + super.kinematics.getVerticalVelocity()*deltaT)
 	 *		| super.getOrigin().setY((int)(super.getPosition().getY()/0.01)))
 	 */
 	@Override @Raw
 	public void jump(double deltaT){
-		super.getPosition().setY(super.getPosition().getY() + super.getVelocity().getY()*deltaT);
-		super.getOrigin().setY((int)(super.getPosition().getY()/0.01));
+		super.getPosition().setY(super.getPosition().getY() + kinematics.getVerticalVelocity()*deltaT);
+		super.getRectangle().setOrigin(getRectangle().getXCoordinate(), (int)(super.getPosition().getY()/0.01));
 	}
 
 }

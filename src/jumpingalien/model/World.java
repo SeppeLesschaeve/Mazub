@@ -182,7 +182,7 @@ public class World implements FeatureHandler{
 	 */
 	@Basic
 	public int getGameWorldWidth() {
-		return this.gameWorld.getDimension().getWidth();
+		return this.gameWorld.getWidth();
 	}
 	
 	/**
@@ -193,7 +193,7 @@ public class World implements FeatureHandler{
 	 */
 	@Basic
 	public int getGameWorldHeight() {
-		return this.gameWorld.getDimension().getHeight();
+		return this.gameWorld.getHeight();
 	}
 	
 	/**
@@ -204,7 +204,7 @@ public class World implements FeatureHandler{
 	 */
 	@Basic
 	public int getVisibleWindowWidth() {
-		return this.visibleWindow.getDimension().getWidth();
+		return this.visibleWindow.getWidth();
 	}
 	
 	/**
@@ -215,7 +215,7 @@ public class World implements FeatureHandler{
 	 */
 	@Basic
 	public int getVisibleWindowHeight() {
-		return this.visibleWindow.getDimension().getHeight();
+		return this.visibleWindow.getHeight();
 	}
 	
 	/**
@@ -226,7 +226,7 @@ public class World implements FeatureHandler{
 	 */
 	@Basic
 	public int getVisibleWindowXCoordinate() {
-		return this.visibleWindow.getOrigin().getX();
+		return this.visibleWindow.getXCoordinate();
 	}
 	
 	/**
@@ -237,7 +237,7 @@ public class World implements FeatureHandler{
 	 */
 	@Basic
 	public int getVisibleWindowYCoordinate() {
-		return this.visibleWindow.getOrigin().getY();
+		return this.visibleWindow.getYCoordinate();
 	}
 	
 	/**
@@ -280,8 +280,8 @@ public class World implements FeatureHandler{
 	 */
 	public boolean shallBePassable(Rectangle rect) {
 		if(rect == null) return true;
-		for(int x = rect.getOrigin().getX(); x < rect.getOrigin().getX() + rect.getDimension().getWidth(); x++) {
-			for(int y = rect.getOrigin().getY(); y < rect.getOrigin().getY() + rect.getDimension().getHeight(); y++) {
+		for(int x = rect.getXCoordinate(); x < rect.getXCoordinate() + rect.getWidth(); x++) {
+			for(int y = rect.getYCoordinate(); y < rect.getYCoordinate() + rect.getHeight(); y++) {
 				if(!getTileFeature(x, y).isPassable()) return false; 
 			}
 		}
@@ -306,7 +306,7 @@ public class World implements FeatureHandler{
 	 */
 	@Basic
 	public int getTargetTileXCoordinate() {
-		return this.targetTile.getRectangle().getOrigin().getX()/getTileLength();
+		return this.targetTile.getRectangle().getXCoordinate()/getTileLength();
 	}
 	
 	/**
@@ -317,7 +317,7 @@ public class World implements FeatureHandler{
 	 */
 	@Basic
 	public int getTargetTileYCoordinate() {
-		return this.targetTile.getRectangle().getOrigin().getY()/getTileLength();
+		return this.targetTile.getRectangle().getYCoordinate()/getTileLength();
 	}
 	
 	/**
@@ -404,7 +404,7 @@ public class World implements FeatureHandler{
 	 */
 	private boolean shallOverlap(GameObject object) {
 		for(Object other: getGameObjects()) {
-			if(object.getRectangle().overlaps(((GameObject) other).getRectangle()) && !object.equals(other) && other instanceof Creature && object instanceof Creature) {
+			if(object.getRectangle().overlaps(((Organism) other).getRectangle()) && !object.equals(other) && other instanceof Creature && object instanceof Creature) {
 				if(other instanceof Slime && object instanceof Slime) {
 					return((Slime) other).getSchool() == ((Slime) object).getSchool();
 				}else {
@@ -431,10 +431,10 @@ public class World implements FeatureHandler{
 	 */
 	private boolean shallBeImpassable(GameObject object) {
 		if(!(object instanceof Plant)){
-			int newX = object.getOrigin().getX(); 
-			int newY = object.getOrigin().getY()+1;
-			for(int pixelX = newX; pixelX < newX+object.getDimension().getWidth()-1; pixelX++) {
-				for(int pixelY = newY; pixelY < newY+object.getDimension().getHeight()-1; pixelY++) {
+			int newX = object.getRectangle().getXCoordinate(); 
+			int newY = object.getRectangle().getYCoordinate()+1;
+			for(int pixelX = newX; pixelX < newX+object.getRectangle().getWidth()-1; pixelX++) {
+				for(int pixelY = newY; pixelY < newY+object.getRectangle().getHeight()-1; pixelY++) {
 					if(!getTileFeature(pixelX, pixelY).isPassable()) {
 						return true;
 					}
@@ -665,14 +665,14 @@ public class World implements FeatureHandler{
 		if(player == null) {
 			this.visibleWindow = new Rectangle(0, 0, xVisible, yVisible); return;
 		}
-		if(player.getOrigin().getX() - 200 >= 0 && player.getOrigin().getY() - 200 >= 0 &&
-			player.getOrigin().getX()+player.getDimension().getWidth()-1 +200 <= gameWorld.getDimension().getWidth() &&
-				player.getOrigin().getY()+player.getDimension().getHeight()-1 +200 <= gameWorld.getDimension().getHeight() &&
-					xVisible >= 400 + player.getDimension().getWidth() && yVisible >= 400 + player.getDimension().getWidth()) {
-						this.visibleWindow = new Rectangle(player.getOrigin().getX() -200, player.getOrigin().getY()- 200, xVisible, yVisible);
-		}else if(!visibleWindow.contains(player.getOrigin())){
-			this.visibleWindow = new Rectangle(gameWorld.getDimension().getWidth()-visibleWindow.getDimension().getWidth(), 
-					gameWorld.getDimension().getHeight()-visibleWindow.getDimension().getHeight(), xVisible, yVisible);
+		if(player.getRectangle().getXCoordinate() - 200 >= 0 && player.getRectangle().getYCoordinate() - 200 >= 0 &&
+			player.getRectangle().getXCoordinate()+player.getRectangle().getWidth()-1 +200 <= gameWorld.getWidth() &&
+				player.getRectangle().getYCoordinate()+player.getRectangle().getHeight()-1 +200 <= gameWorld.getHeight() &&
+					xVisible >= 400 + player.getRectangle().getWidth() && yVisible >= 400 + player.getRectangle().getWidth()) {
+						this.visibleWindow = new Rectangle(player.getRectangle().getXCoordinate() -200, player.getRectangle().getYCoordinate()- 200, xVisible, yVisible);
+		}else if(!visibleWindow.contains(player.getRectangle().getOrigin())){
+			this.visibleWindow = new Rectangle(gameWorld.getWidth()-visibleWindow.getWidth(), 
+					gameWorld.getHeight()-visibleWindow.getHeight(), xVisible, yVisible);
 		}
 	}
 	
@@ -683,12 +683,12 @@ public class World implements FeatureHandler{
 			player.advanceTime(deltaT);
 		}
 		for(Object gameObject : getGameObjects()) {
-			if(!(gameObject instanceof Mazub)) ((GameObject) gameObject).advanceTime(deltaT);
+			if(!(gameObject instanceof Mazub)) ((Organism) gameObject).advanceTime(deltaT);
 		}
 	}
 	
 	
-	public void handleFeatureHit(GameObject object, double dt) {
+	public void handleFeatureHit(Organism object, double dt) {
 		for(FeatureHandler handler: featureHandlers) {
 			handler.<Mazub>handleFeatureHit((Mazub)object, dt);
 		}
@@ -710,13 +710,13 @@ public class World implements FeatureHandler{
 	 *
 	 */
 	public void updateWindow(Position<Integer> position) {
-		int x = player.getOrigin().getX() - position.getX(); 
-		int y = player.getOrigin().getY() - position.getY();
-		if((x > 0 && visibleWindow.getOrigin().getX() + x + visibleWindow.getDimension().getWidth() - 1 < gameWorld.getDimension().getWidth()) || 
+		int x = player.getRectangle().getXCoordinate() - position.getX(); 
+		int y = player.getRectangle().getYCoordinate() - position.getY();
+		if((x > 0 && visibleWindow.getOrigin().getX() + x + visibleWindow.getWidth() - 1 < gameWorld.getWidth()) || 
 				(x < 0 && visibleWindow.getOrigin().getX() + x >= 0)) {
 			visibleWindow.getOrigin().setX(visibleWindow.getOrigin().getX() + x);
 		}
-		if((y > 0 && visibleWindow.getOrigin().getY() + y + visibleWindow.getDimension().getHeight() -1 < gameWorld.getDimension().getHeight()) ||
+		if((y > 0 && visibleWindow.getOrigin().getY() + y + visibleWindow.getHeight() -1 < gameWorld.getHeight()) ||
 				(y < 0 && visibleWindow.getOrigin().getY() + y >= 0)) {
 			visibleWindow.getOrigin().setY(visibleWindow.getOrigin().getY() + y);
 		}
