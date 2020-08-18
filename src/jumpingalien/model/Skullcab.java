@@ -51,13 +51,9 @@ public class Skullcab extends Plant implements Jump{
 	 */
 	@Basic
 	public int getOrientation() {
-		if(kinematics.getVerticalVelocity() < 0) {
-			return -1;
-		}
-		if(kinematics.getVerticalVelocity() > 0) {
-			return 1;
-		}
-		return 0;
+		if(kinematics.getVerticalVelocity() < 0) return -1;
+		else if(kinematics.getVerticalVelocity() > 0) return 1;
+		else return 0;
 	}
 	
 	/**
@@ -156,7 +152,7 @@ public class Skullcab extends Plant implements Jump{
 	@Override
 	protected void arrangeOvershoot(double remainder, double dt){
 		arrangeMove(remainder);
-		endJump(dt);
+		endJump();
 		arrangeMove(dt - remainder);
 	}
 
@@ -169,8 +165,8 @@ public class Skullcab extends Plant implements Jump{
 	 * @post ...
 	 * 		| setTimer(0.0) && super.getVelocity().setY(-super.kinematics.getVerticalVelocity()) && super.setSprite(1-super.getIndex())
 	 */
-	@Override @Raw
-	public void endJump(double deltaT){
+	@Raw
+	public void endJump(){
 		setTimer(0.0); 
 		kinematics.setVerticalVelocity(-kinematics.getVerticalVelocity()); 
 		super.setSprite(1-super.getIndex());

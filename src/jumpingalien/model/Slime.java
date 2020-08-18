@@ -317,8 +317,7 @@ public class Slime extends Creature implements Run{
 	 *		| for(GameObject object: objects) 
 	 *		|	if(object instanceof Slime && object != this) then arrangeSwitch((Slime)object) && break
 	 */
-	@Override
-	public void endRun(double deltaT) {
+	public void endRun() {
 		if((getOrientation() == -1 && !super.getWorld().shallBePassable(super.getLeftBorder()))||
 				(getOrientation() == 1 && !super.getWorld().shallBePassable(super.getRightBorder()))) {
 			kinematics.setHorizontalAcceleration(0.0);
@@ -413,7 +412,7 @@ public class Slime extends Creature implements Run{
 	 *
 	 */
 	private void arrangeMovement(double dt) {
-		if(canRun()) run(dt); else endRun(dt);
+		if(canRun()) run(dt); else endRun();
 		if(!super.isInside()) terminate();
 	}
 

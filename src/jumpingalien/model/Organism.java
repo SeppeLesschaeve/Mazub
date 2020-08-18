@@ -97,7 +97,7 @@ public abstract class Organism extends GameObject{
 		}
 
 		@Override
-		public void setBoundsOfHorizontalBoundaries(double min, double max) {
+		public void setHorizontalBoundaries(double min, double max) {
 			this.setMinimumHorizontalVelocity(min);
 			this.setMaximumHorizontalVelocity(max);
 		}
@@ -180,7 +180,7 @@ public abstract class Organism extends GameObject{
 	
 	public void terminate() {
 		if(this instanceof Slime && ((Slime) this).getSchool() != null) {
-				((Slime) this).getSchool().removeSlime(((Slime) this));
+			((Slime) this).getSchool().removeSlime(((Slime) this));
 		}
 		if(this instanceof Creature && ((Creature)this).getHitPoints() != 0) 
 			((Creature) this).updateHitPoints(-((Creature)this).getHitPoints());

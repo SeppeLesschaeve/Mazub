@@ -7,6 +7,7 @@ public interface Run {
 	@Raw
 	public void run(double deltaT);
 	
-	public void endRun(double deltaT);
+	@Raw
+	public void endRun();
 
 }

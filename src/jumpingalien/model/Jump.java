@@ -8,6 +8,6 @@ public interface Jump {
 	public void jump(double deltaT);
 	
 	@Raw
-	public void endJump(double deltaT);
+	public void endJump();
 
 }

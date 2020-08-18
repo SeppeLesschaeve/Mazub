@@ -147,8 +147,8 @@ public class Spider extends Organism implements Run, Jump{
 	 *		|		&& setSprite(1)
 	 * 
 	 */
-	@Override @Raw
-	public void endJump(double deltaT){
+	@Raw
+	public void endJump(){
 		if(kinematics.getVerticalVelocity() > 0) { 
 			
 			kinematics.setVerticalAcceleration(-JUMP_ACC);
@@ -246,8 +246,7 @@ public class Spider extends Organism implements Run, Jump{
 	 *		|else if(super.kinematics.getHorizontalVelocity() < 0) then super.getVelocity().setX(getLegs()*0.15)
 	 * 
 	 */
-	@Override
-	public void endRun(double deltaT) {
+	public void endRun() {
 		if(kinematics.getHorizontalVelocity() > 0) kinematics.setHorizontalVelocity(getLegs()*-0.15);
 		else if(kinematics.getHorizontalVelocity() < 0) kinematics.setHorizontalVelocity(getLegs()*0.15);
 	}
@@ -347,8 +346,8 @@ public class Spider extends Organism implements Run, Jump{
 	 */
 	private void arrangeMovement(double dt) {
 		if( isDead() ) return;
-		if((isJumping() && canJump()) || (isFalling() && canFall())) jump(dt); else endJump(dt);
-		if(isRunning() && canRun()) run(dt); else endRun(dt);
+		if((isJumping() && canJump()) || (isFalling() && canFall())) jump(dt); else endJump();
+		if(isRunning() && canRun()) run(dt); else endRun();
 		if(!super.isInside()) terminate();
 	}
 
@@ -377,10 +376,11 @@ public class Spider extends Organism implements Run, Jump{
 				case 0:arrangeMazubHit(dt);break;
 				case 3:arrangeSlimeHit(dt);break;
 				case 4:arrangeSharkHit(dt);break;
-				case 5:if(object instanceof Spider && object.getBlockTime() == 0) {
-					if(isRunning()) endRun(dt);
-					if(isJumping() || isFalling()) endJump(dt);
-				}break;
+				case 5:
+					if(object instanceof Spider && object.getBlockTime() == 0) {
+						if(isRunning()) endRun();
+						if(isJumping() || isFalling()) endJump();
+					}break;
 				default: break;
 				}
 			}
@@ -412,7 +412,8 @@ public class Spider extends Organism implements Run, Jump{
 			}
 			setFeatureTime(getFeatureTime() + dt);
 			if(getFeatureTime() >= 0.6) {
-				setLegs(getLegs() - 2); setFeatureTime(getFeatureTime() - 0.6);
+				setLegs(getLegs() - 2); 
+				setFeatureTime(0.0);
 			}
 		}else setFeatureTime(0.0);
 	}
@@ -435,7 +436,7 @@ public class Spider extends Organism implements Run, Jump{
 		if(getWorld() == null) {return false;}
 		for(int pixelX = super.getRectangle().getXCoordinate() - 1; pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth(); pixelX++) {
 			for(int pixelY= super.getRectangle().getYCoordinate() - 1; pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight(); pixelY++) {
-				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER || getWorld().getTileFeature(pixelX, pixelY) == Feature.ICE) {return true;}
+				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER || getWorld().getTileFeature(pixelX, pixelY) == Feature.ICE) return true;
 			}
 		}
 		return false;
@@ -459,7 +460,7 @@ public class Spider extends Organism implements Run, Jump{
 		if(getWorld() == null) {return false;}
 		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth(); pixelX++) {
 			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight(); pixelY++) {
-				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) {return true;}
+				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) return true;
 			}
 		}
 		return false;
@@ -488,13 +489,9 @@ public class Spider extends Organism implements Run, Jump{
 	 */
 	@Override
 	public int getOrientation() {
-		if(kinematics.getVerticalVelocity() < 0 || kinematics.getHorizontalVelocity() < 0) {
-			return -1;
-		}
-		if(kinematics.getVerticalVelocity() > 0 || kinematics.getHorizontalVelocity() > 0){
-			return 1;
-		}
-		return 0;
+		if(kinematics.getVerticalVelocity() < 0 || kinematics.getHorizontalVelocity() < 0) return -1;
+		else if(kinematics.getVerticalVelocity() > 0 || kinematics.getHorizontalVelocity() > 0) return 1;
+		else return 0;
 	}
 
 	/**

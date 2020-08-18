@@ -34,7 +34,7 @@ public abstract class Kinematics {
 
 	public abstract void setMaximumHorizontalVelocity(double max);
 	
-	public abstract void setBoundsOfHorizontalBoundaries(double min, double max);
+	public abstract void setHorizontalBoundaries(double min, double max);
 	
 	public abstract void enforceHorizontalBoundaries();
 	

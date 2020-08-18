@@ -86,9 +86,9 @@ public class World implements FeatureHandler{
 	 *
 	 */
 	public World(int maxObjects, int tileSize, int nbTilesX, int nbTilesY, int[] target, int visibleWidth, int visibleHeight, int... geologicalFeatures) throws IllegalArgumentException{
-		if(tileSize <= 0) { tileSize = Math.abs(tileSize);}
-		if(nbTilesX < 0 ) {	nbTilesX = Math.abs(nbTilesX);}
-		if(nbTilesY < 0 ) {	nbTilesY = Math.abs(nbTilesY);}
+		if(tileSize <= 0) tileSize = Math.abs(tileSize);
+		if(nbTilesX < 0 ) nbTilesX = Math.abs(nbTilesX);
+		if(nbTilesY < 0 ) nbTilesY = Math.abs(nbTilesY);
 		if(geologicalFeatures == null) throw new IllegalArgumentException("The features must be specified");
 		if(target == null || target.length != 2) throw new IllegalArgumentException("The target tile must be specified and two-dimensional");
 		if (tileSize*nbTilesX < visibleWidth || tileSize*nbTilesY < visibleHeight) throw new IllegalArgumentException("The visible window can not be bigger than the game world");
@@ -258,7 +258,7 @@ public class World implements FeatureHandler{
 	@Basic
 	public Feature getTileFeature(int x, int y) {
 		Position<Integer> point = new Position<>(x,y);
-		if(!this.gameWorld.contains(point)) {return Feature.AIR;}
+		if(!this.gameWorld.contains(point)) return Feature.AIR;
 		x = (x- x%tileLength)/tileLength;  y = (y-y%tileLength)/tileLength;
 		return tiles[y][x].getFeature();
 	}
@@ -435,9 +435,7 @@ public class World implements FeatureHandler{
 			int newY = object.getRectangle().getYCoordinate()+1;
 			for(int pixelX = newX; pixelX < newX+object.getRectangle().getWidth()-1; pixelX++) {
 				for(int pixelY = newY; pixelY < newY+object.getRectangle().getHeight()-1; pixelY++) {
-					if(!getTileFeature(pixelX, pixelY).isPassable()) {
-						return true;
-					}
+					if(!getTileFeature(pixelX, pixelY).isPassable()) return true;
 				}
 			}
 		}
@@ -453,10 +451,8 @@ public class World implements FeatureHandler{
 	 */
 	public boolean hasProperGameObjects() {
 		for(Object gameObject: getGameObjects()) {
-			if(!canHaveAsGameObject((GameObject) gameObject))
-				return false;
-			if(!((GameObject)gameObject).getWorld().equals(this))
-				return false;
+			if(!canHaveAsGameObject((GameObject) gameObject)) return false;
+			if(!((GameObject)gameObject).getWorld().equals(this)) return false;
 		}
 		return true;
 	}
@@ -567,10 +563,8 @@ public class World implements FeatureHandler{
 	 */
 	public boolean hasProperSchools() {
 		for(Object school: getSchools()) {
-			if(!canHaveAsSchool((School) school))
-				return false;
-			if(!((School) school).getWorld().equals(this))
-				return false;
+			if(!canHaveAsSchool((School) school)) return false;
+			if(!((School) school).getWorld().equals(this)) return false;
 		}
 		return true;
 	}
@@ -584,7 +578,7 @@ public class World implements FeatureHandler{
 	 * 		| result == getSchools().length  <  MAX_SCHOOLS
 	 */
 	public boolean canHaveAsSchool(School school){
-		return ( getSchools().length <  MAX_SCHOOLS);
+		return getSchools().length <  MAX_SCHOOLS;
 	}
 
 	/**
@@ -713,13 +707,11 @@ public class World implements FeatureHandler{
 		int x = player.getRectangle().getXCoordinate() - position.getX(); 
 		int y = player.getRectangle().getYCoordinate() - position.getY();
 		if((x > 0 && visibleWindow.getOrigin().getX() + x + visibleWindow.getWidth() - 1 < gameWorld.getWidth()) || 
-				(x < 0 && visibleWindow.getOrigin().getX() + x >= 0)) {
+				(x < 0 && visibleWindow.getOrigin().getX() + x >= 0)) 
 			visibleWindow.getOrigin().setX(visibleWindow.getOrigin().getX() + x);
-		}
 		if((y > 0 && visibleWindow.getOrigin().getY() + y + visibleWindow.getHeight() -1 < gameWorld.getHeight()) ||
-				(y < 0 && visibleWindow.getOrigin().getY() + y >= 0)) {
+				(y < 0 && visibleWindow.getOrigin().getY() + y >= 0)) 
 			visibleWindow.getOrigin().setY(visibleWindow.getOrigin().getY() + y);
-		}
 	}
 	
 	/**
@@ -815,7 +807,7 @@ public class World implements FeatureHandler{
 	 * 		| result == getPlayer() == null || getPlayer().getRectangle().overlaps(getTargetTile().getRectangle())
 	 */
 	public boolean isGameOver() {
-		return(getPlayer() == null || getPlayer().getRectangle().overlaps(getTargetTile().getRectangle()));
+		return getPlayer() == null || getPlayer().getRectangle().overlaps(getTargetTile().getRectangle());
 	}
 
 }

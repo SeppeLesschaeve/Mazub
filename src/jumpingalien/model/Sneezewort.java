@@ -48,13 +48,9 @@ public class Sneezewort extends Plant implements Run{
 	 */
 	@Basic
 	public int getOrientation() {
-		if(kinematics.getHorizontalVelocity() < 0) {
-			return -1;
-		}
-		if(kinematics.getHorizontalVelocity() > 0) {
-			return 1;
-		}
-		return 0;
+		if(kinematics.getHorizontalVelocity() < 0) return -1;
+		else if(kinematics.getHorizontalVelocity() > 0) return 1;
+		else return 0;
 	}
 
 	/**
@@ -152,7 +148,7 @@ public class Sneezewort extends Plant implements Run{
 	@Override
 	protected void arrangeOvershoot(double remainder, double dt){
 		arrangeMove(remainder);
-		endRun(dt);
+		endRun();
 		arrangeMove(dt - remainder);
 	}
 
@@ -181,8 +177,7 @@ public class Sneezewort extends Plant implements Run{
 	 * @post ...
 	 * 		| setTimer(0.0) && super.getVelocity().setX(-super.kinematics.getHorizontalVelocity()) && super.setSprite(1-super.getIndex())
 	 */
-	@Override
-	public void endRun(double deltaT) {
+	public void endRun() {
 		setTimer(0.0); 
 		kinematics.setHorizontalVelocity(-kinematics.getHorizontalVelocity()); 
 		super.setSprite(1-super.getIndex());
