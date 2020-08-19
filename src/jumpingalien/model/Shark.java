@@ -267,12 +267,14 @@ public class Shark extends Creature implements Run, Jump{
 				kinematics.setYVelocity(Y_VEL); else kinematics.setYVelocity(0.0);
 		}
 		if(mustFall()) kinematics.setYAcceleration(Y_ACC);
-		for(double time = 0.0, dt = super.updateDt(deltaT, time); time < deltaT; time += dt, dt = super.updateDt(deltaT, time)) {
+		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
+		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
 			if(getDelay() >= REMOVE_DELAY) terminate();
 			arrangeFeatureHit(dt);
 			arrangeObjectHit(dt);
 			arrangeMovement(dt);
+			time += dt;
 		}
 	}
 	

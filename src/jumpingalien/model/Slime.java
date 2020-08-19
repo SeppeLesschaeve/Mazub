@@ -391,12 +391,14 @@ public class Slime extends Creature implements Run{
 	 */
 	public void advanceTime(double deltaT) throws IllegalArgumentException{
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		for(double time = 0.0, dt = super.updateDt(deltaT, time); time < deltaT; time += dt, dt = super.updateDt(deltaT, time)) {
+		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
+		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
 			if(getDelay() >= REMOVE_DELAY) terminate();
 			arrangeFeatureHit(dt);
 			arrangeObjectHit(dt);
 			arrangeMovement(dt);
+			time += dt;
 		}
 	}
 

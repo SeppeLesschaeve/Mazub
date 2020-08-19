@@ -169,29 +169,6 @@ public abstract class Plant extends Organism{
 	}
 	
 	protected abstract void arrangeMove(double deltaT); //specification can be seen in the subclasses of this class
-	protected abstract void arrangeOvershoot(double remainder, double deltaT); //specification can be seen in the subclasses of this class 
 	protected abstract void startMove(); //specification can be seen in the subclasses of this class
 
-	/**
-	 * This method is used to return a new time slice for the advancement of the state of the plant
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as the time that must be passed in total
-	 * @param time
-	 * 			This parameter is used as the time that has already been passed
-	 * 
-	 * @post ...
-	 * 		|double result =  0.01 / ( Math.sqrt( Math.pow(kinematics.getHorizontalVelocity(), 2) + Math.pow(kinematics.getVerticalVelocity(), 2) ));
-	 * @post ...
-	 * 		|if(time + result > deltaT) then result = deltaT-time
-	 *		|result.equals(result)	
-	 */
-	@Override
-	protected double updateDt(double deltaT, double time) {
-		double result =  0.01 / ( Math.sqrt( Math.pow(kinematics.getXVelocity(), 2) + Math.pow(kinematics.getYVelocity(), 2) ));
-		if(time + result > deltaT) {
-			result = deltaT-time;
-		}
-		return result;
-	}
 }

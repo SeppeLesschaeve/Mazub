@@ -78,7 +78,6 @@ public abstract class Organism extends GameObject{
 	public abstract int getOrientation();
 	public abstract void advanceTime(double deltaT);
 	public abstract boolean isDead();
-	protected abstract double updateDt(double deltaT, double time);
 	
 	public void terminate() {
 		if(this instanceof Slime && ((Slime) this).getSchool() != null) {

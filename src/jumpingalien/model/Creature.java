@@ -16,8 +16,8 @@ public abstract class Creature extends Organism {
 	protected HitPoint hitPoint;
 
 	@Model
-	protected Creature(int pixelLeftX, int pixelBottomY, int initialHit, int minHit, int maxHit, Sprite... sprites){
-		super(pixelLeftX, pixelBottomY, sprites);
+	protected Creature(int x, int y, int initialHit, int minHit, int maxHit, Sprite... sprites){
+		super(x, y, sprites);
 		this.hitPoint = new HitPoint(initialHit, minHit, maxHit);
 	}
 	
@@ -32,25 +32,9 @@ public abstract class Creature extends Organism {
 
 	@Basic @Override
 	public int getOrientation() {
-		if(kinematics.getXVelocity() < 0 || kinematics.getXAcceleration() < 0) {
-			return -1;
-		}else if (kinematics.getXVelocity() > 0 || kinematics.getXAcceleration() > 0) {
-			return 1;
-		}
-		return 0;
-	}
-
-	@Override
-	protected double updateDt(double deltaT, double time) {
-		double result = 0.01 / ( Math.sqrt( Math.pow(kinematics.getXVelocity(), 2) + Math.pow(kinematics.getYVelocity(), 2) ) + 
-				(Math.sqrt( Math.pow(kinematics.getXAcceleration(), 2) + Math.pow(kinematics.getYAcceleration(), 2) ) * deltaT) );
-		if(Double.isInfinite(result) || result > 0.01) {
-			result = 0.01;
-		}
-		if(time + result > deltaT) {
-			result = deltaT-time;
-		}
-		return result;
+		if(kinematics.getXVelocity() < 0 || kinematics.getXAcceleration() < 0) return -1;
+		else if (kinematics.getXVelocity() > 0 || kinematics.getXAcceleration() > 0) return 1;
+		else return 0;
 	}
 	
 	protected void updateX(double dt) {

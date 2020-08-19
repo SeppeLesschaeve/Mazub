@@ -83,6 +83,20 @@ public class Kinematics {
 		YVelocity += YAcceleration*time;
 		this.roundXVelocity();	
 	}
+
+	public boolean isStationary() {
+		return XVelocity == 0 && YVelocity == 0 && XAcceleration == 0 && YAcceleration == 0;
+	}
+	
+	public double calculateNewTimeSlice(double dt, double time) {
+		double denominator = Math.sqrt( Math.pow(XVelocity, 2) + Math.pow(YVelocity, 2)) + 
+				Math.sqrt( Math.pow(XAcceleration, 2) + Math.pow(YAcceleration, 2))*dt;
+		double result = 0.01 / denominator;
+		if(time + result > dt) {
+			return dt-time;
+		}
+		return result;
+	}
 	
 	
 }

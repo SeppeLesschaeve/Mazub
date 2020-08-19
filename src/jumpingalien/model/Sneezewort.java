@@ -90,18 +90,12 @@ public class Sneezewort extends Plant implements Run{
 	@Override
 	public void advanceTime(double deltaT) throws IllegalArgumentException{
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		for(double time = 0.0, dt = updateDt(deltaT, time); time < deltaT; time += dt, dt = updateDt(deltaT, time)) {
+		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
+		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
+			if(!isDead()) arrangeMove(dt);
+			else super.setDelay(dt);
 			this.setAge(getAge() + dt);
-			if(getAge() < SNEEZE_AGE && getTimer() + dt > Constant.PLANT_SWITCH_TIME.getValue()) { 
-				arrangeOvershoot(Constant.PLANT_SWITCH_TIME.getValue() - getTimer(), dt);
-			}else if(getAge() < SNEEZE_AGE) {
-				arrangeMove(dt);
-			}else {
-				if(getWorld() != null && getWorld().getPlayer() != null) {
-					getWorld().getPlayer().arrangeObjectHit(deltaT);
-				}
-				super.setDelay(dt);
-			}
+			time +=  dt;
 		}
 		if(super.getDelay() >= REMOVE_DELAY || !isInside()) terminate();
 	}
@@ -122,36 +116,23 @@ public class Sneezewort extends Plant implements Run{
 	@Override
 	protected void arrangeMove(double deltaT) {
 		setTimer(getTimer() + deltaT);
-		if(kinematics.getXVelocity() != 0) run(deltaT);
+		double overshoot = getTimer()-Constant.PLANT_SWITCH_TIME.getValue();
+		if(getTimer() >= Constant.PLANT_SWITCH_TIME.getValue()) {
+			run(deltaT-overshoot);
+			endRun();
+			run(overshoot);
+		}else {
+			run(deltaT);
+		}
 		if(!super.isInside()) {
-			terminate(); return;
+			terminate(); 
+			return;
 		}
 		if(getWorld() != null && getWorld().getPlayer() != null) {
 			getWorld().getPlayer().arrangeObjectHit(deltaT);
 		}
 	}
 	
-	/**
-	 * This method updates the position using dt as time and remainder as remainder up to 0.5 seconds to the switch 
-	 * 
-	 * @param dt
-	 * 			This parameter is used to update the position
-	 * @param remainder
-	 * 			This parameter is used as remainder to update the position
-	 * 
-	 * @post ...
-	 * 		| arrangeMove(remainder)
-	 *		| endRun(dt)
-	 *		|arrangeMove(dt - remainder)
-	 *
-	 */
-	@Override
-	protected void arrangeOvershoot(double remainder, double dt){
-		arrangeMove(remainder);
-		endRun();
-		arrangeMove(dt - remainder);
-	}
-
 	/**
 	 * This method is used to update the Position of the Sneezewort using deltaT as time
 	 *
@@ -178,7 +159,7 @@ public class Sneezewort extends Plant implements Run{
 	 * 		| setTimer(0.0) && super.getVelocity().setX(-super.kinematics.getHorizontalVelocity()) && super.setSprite(1-super.getIndex())
 	 */
 	public void endRun() {
-		setTimer(0.0); 
+		setTimer(getTimer()-Constant.PLANT_SWITCH_TIME.getValue());
 		kinematics.setXVelocity(-kinematics.getXVelocity()); 
 		super.setSprite(1-super.getIndex());
 	}

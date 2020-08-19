@@ -322,12 +322,14 @@ public class Spider extends Organism implements Run, Jump{
 			kinematics.setYAcceleration(JUMP_ACC);
 		}
 		if(kinematics.getXVelocity() == 0.0 && isAbleToRun()) kinematics.setXVelocity(-(0.15*getLegs()));
-		for(double time = 0.0, dt = updateDt(deltaT, time); time < deltaT; time += dt, dt = updateDt(deltaT, time)) {
+		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
+		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
 			if(getDelay() >= REMOVE_DELAY) terminate();
 			arrangeFeatureHit(dt);
 			arrangeObjectHit(dt);
 			arrangeMovement(dt);
+			time += dt;
 		}	
 	}
 
