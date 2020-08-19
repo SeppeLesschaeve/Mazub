@@ -81,7 +81,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	protected void setPixelPosition(int x, int y) throws IllegalArgumentException{
 		if( x < 0 || y < 0) throw new IllegalArgumentException("The coordinates must be positive");
-		super.getRectangle().getOrigin().setPosition(x, y);
+		super.updatePosition(x, y);
 	}
 	
 	/**
@@ -439,7 +439,7 @@ public class Mazub extends Creature implements Run, Jump{
 				super.setSprite(0);
 				setEndMoveTime(0.0);
 			}
-			super.getRectangle().setDimension(getImageWidth(), getImageHeight());
+			super.updateDimension(getImageWidth(), getImageHeight());
 		}
 	}
 	
@@ -460,7 +460,7 @@ public class Mazub extends Creature implements Run, Jump{
 		setSpriteTime(getSpriteTime() + dt);
 		if(getSpriteTime() >= SPRITE_CHANGE) {
 			super.setSprite(super.getIndex() + 1);
-			super.getRectangle().setDimension(getImageWidth(), getImageHeight());
+			super.updateDimension(getImageWidth(), getImageHeight());
 			setSpriteTime(getSpriteTime() - SPRITE_CHANGE);
 		}
 	}
@@ -473,12 +473,11 @@ public class Mazub extends Creature implements Run, Jump{
 		if(kinematics.isStationary()) dt=deltaT;
 		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
-			if(getDelay() >= REMOVE_DELAY) terminate();
+			if(getDelay() >= Constant.REMOVE_DELAY.getValue()) terminate();
 			arrangeFeatureHit(dt);
 			arrangeObjectHit(dt);
 			if(!canMoveInCurrentState()) setNewState();
 			arrangeMovement(dt);
-			if(super.getIndex() == 2 || super.getIndex() == 3) arrangeEndMove(dt);
 			time += dt;
 		}
 		if(getWorld() != null) super.getWorld().updateWindow(position);
@@ -626,6 +625,7 @@ public class Mazub extends Creature implements Run, Jump{
 		if(isRunning()) run(dt);
 		if(!super.isInside()) terminate();
 		if(isRunning() && !isDucking() && kinematics.getYVelocity() <= 0) arrangeSpriteChange(dt);
+		if(super.getIndex() == 2 || super.getIndex() == 3) arrangeEndMove(dt);
 	}
 	
 	/**
@@ -665,8 +665,8 @@ public class Mazub extends Creature implements Run, Jump{
 	public Feature getDominantFeature() {
 		if(getWorld() == null) return Feature.AIR;
 		Feature feature = Feature.AIR;
-		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth()-1; pixelX+= Math.min(getRectangle().getXCoordinate()+super.getRectangle().getWidth()+pixelX-1, getWorld().getTileLength())) {
-			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight()-1; pixelY+= Math.min(getRectangle().getYCoordinate()+super.getRectangle().getHeight()+pixelY-1, getWorld().getTileLength())) {
+		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth()-1; pixelX++) {
+			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight()-1; pixelY++) {
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) return Feature.MAGMA;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.GAS) feature = Feature.GAS;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER && feature != Feature.GAS) feature = Feature.WATER;
@@ -800,10 +800,10 @@ public class Mazub extends Creature implements Run, Jump{
 	}
 	
 	public void arrangeSneezeHit(Sneezewort sneezewort, double dt) {
-		if(getHitPoints() < hitPoint.getMaximum() && getRectangle().overlaps(sneezewort.getRectangle())) { 
-			if(sneezewort.getAge() < Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
+		if(getPoints() < getHitPoints().getMaximum() && getRectangle().overlaps(sneezewort.getRectangle())) { 
+			if(sneezewort.getAge() < Plant.SNEEZE_AGE && sneezewort.getPoints() > 0) {
 				updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
-			}else if(sneezewort.getAge() >= Plant.SNEEZE_AGE && sneezewort.getHit() > 0) {
+			}else if(sneezewort.getAge() >= Plant.SNEEZE_AGE && sneezewort.getPoints() > 0) {
 				updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
 			}
 			sneezewort.terminate();
@@ -814,19 +814,19 @@ public class Mazub extends Creature implements Run, Jump{
 		if(!skullcab.getRectangle().overlaps(getRectangle())) {
 			skullcab.setHitTime(0); return;
 		}
-		if(skullcab.getHitTime() == 0 && skullcab.getHit() != 0 && getHitPoints() < hitPoint.getMaximum() ) {
+		if(skullcab.getHitTime() == 0 && skullcab.getPoints() != 0 && getPoints() < getHitPoints().getMaximum() ) {
 			if(skullcab.isDead()) {
 				updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
 			}else {
 				updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
 			}
-			skullcab.getHitPoint().updatePoints(-1);
+			skullcab.updateHitPoints(-1);
 		}
 		skullcab.setHitTime(skullcab.getHitTime() + dt);
 		if(skullcab.getHitTime()  >= 0.6) {
 			skullcab.setHitTime(0);
 		}
-		if(skullcab.getHit() == 0) skullcab.terminate();
+		if(skullcab.getPoints() == 0) skullcab.terminate();
 	}
 	
 	public void arrangeSharkHit(double dt) {

@@ -97,7 +97,7 @@ public class Sneezewort extends Plant implements Run{
 			this.setAge(getAge() + dt);
 			time +=  dt;
 		}
-		if(super.getDelay() >= REMOVE_DELAY || !isInside()) terminate();
+		if(super.getDelay() >= Constant.REMOVE_DELAY.getValue() || !isInside()) terminate();
 	}
 	
 	/**
@@ -145,8 +145,7 @@ public class Sneezewort extends Plant implements Run{
 	 */
 	@Override
 	public void run(double deltaT) {
-		super.getPosition().setX(super.getPosition().getX() + kinematics.getXVelocity()*deltaT);
-		super.getRectangle().setOrigin((int)(super.getPosition().getX()/0.01), getRectangle().getYCoordinate());
+		super.updateHorizontalComponent(super.getPosition().getX() + kinematics.getXVelocity()*deltaT);
 	}
 
 	/**

@@ -100,7 +100,7 @@ public class Skullcab extends Plant implements Jump{
 			this.setAge(getAge() + dt);
 			time+=dt;
 		}
-		if(super.getDelay() >= REMOVE_DELAY || !isInside()) terminate();
+		if(super.getDelay() >= Constant.REMOVE_DELAY.getValue() || !isInside()) terminate();
 	}
 	
 	/**
@@ -159,8 +159,7 @@ public class Skullcab extends Plant implements Jump{
 	 */
 	@Override @Raw
 	public void jump(double deltaT){
-		super.getPosition().setY(super.getPosition().getY() + kinematics.getYVelocity()*deltaT);
-		super.getRectangle().setOrigin(getRectangle().getXCoordinate(), (int)(super.getPosition().getY()/0.01));
+		super.updateVerticalComponent(super.getPosition().getY() + kinematics.getYVelocity()*deltaT);
 	}
 
 }

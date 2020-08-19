@@ -13,7 +13,7 @@ public class MazubFeatureHandler implements FeatureHandler{
 
 	@Override
 	public <T extends Organism> void handleFeatureHit(T object, double time) {
-		if(mazub.getHitPoints() == 0) return;
+		if(mazub.getPoints() == 0) return;
 		Feature feature = mazub.getDominantFeature();
 		if(feature != previousFeature) {
 			featureTime = 0;

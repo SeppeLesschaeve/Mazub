@@ -171,8 +171,8 @@ public class Facade implements IFacade {
 	public World createWorld(int tileSize, int nbTilesX, int nbTilesY, int[] targetTileCoordinate,
 			int visibleWindowWidth, int visibleWindowHeight, int... geologicalFeatures) throws ModelException {
 		try {
-			return new World(100, tileSize, nbTilesX, nbTilesY, targetTileCoordinate, visibleWindowWidth,
-					visibleWindowHeight, geologicalFeatures);
+			return new World(tileSize, nbTilesX, nbTilesY, targetTileCoordinate, visibleWindowWidth,
+					visibleWindowHeight, 100, geologicalFeatures);
 		}catch(IllegalArgumentException ill) {
 			throw new ModelException("You can not create a world with given parameters");
 		}
@@ -353,8 +353,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public int getHitPoints(Object object) throws ModelException {
-		if(object instanceof Creature) return ((Creature) object).getHitPoints();
-		return ((Plant) object).getHit();
+		return ((Organism) object).getPoints();
 	}
 	
 	@Override

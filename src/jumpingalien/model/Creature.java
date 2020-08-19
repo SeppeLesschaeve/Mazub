@@ -13,22 +13,11 @@ import jumpingalien.util.Sprite;
  */
 public abstract class Creature extends Organism {
 	
-	protected HitPoint hitPoint;
-
 	@Model
 	protected Creature(int x, int y, int initialHit, int minHit, int maxHit, Sprite... sprites){
-		super(x, y, sprites);
-		this.hitPoint = new HitPoint(initialHit, minHit, maxHit);
+		super(x, y, initialHit, minHit, maxHit, sprites);
 	}
 	
-	@Basic
-	public int getHitPoints() {
-		return hitPoint.getPoints();
-	}
-	
-	protected void updateHitPoints(int points) {
-		this.hitPoint.updatePoints(points);
-	}
 
 	@Basic @Override
 	public int getOrientation() {
@@ -38,20 +27,16 @@ public abstract class Creature extends Organism {
 	}
 	
 	protected void updateX(double dt) {
-		double newX = this.getPosition().getX() + (kinematics.getXVelocity()*dt)+ (kinematics.getXAcceleration()*dt*dt/2);
-		super.getPosition().setX(newX);
-		super.getRectangle().getOrigin().setX((int)(newX/0.01));
+		super.updateHorizontalComponent(this.getPosition().getX() + (kinematics.getXVelocity()*dt)+ (kinematics.getXAcceleration()*dt*dt/2));
 	}
 	
 	protected void updateY(double dt) {
-		double newY = this.getPosition().getY() + (kinematics.getYVelocity()*dt) + (kinematics.getYAcceleration()*dt*dt/2);
-		super.getPosition().setY(newY);
-		this.getRectangle().getOrigin().setY((int)(newY/0.01));
+		super.updateVerticalComponent(this.getPosition().getY() + (kinematics.getYVelocity()*dt) + (kinematics.getYAcceleration()*dt*dt/2));
 	}
 	
 	@Override
 	public boolean isDead() {
-		return getHitPoints() == 0;
+		return getPoints() == 0;
 	}
 	
 	protected boolean canStopRun() {

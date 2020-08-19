@@ -18,7 +18,7 @@ public class Tile {
 	
 	@Basic
 	public Rectangle getRectangle() {
-		return this.rectangle;
+		return rectangle.clone();
 	}
 	
 	@Basic

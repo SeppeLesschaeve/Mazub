@@ -394,7 +394,7 @@ public class Slime extends Creature implements Run{
 		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
 		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
-			if(getDelay() >= REMOVE_DELAY) terminate();
+			if(getDelay() >= Constant.REMOVE_DELAY.getValue()) terminate();
 			arrangeFeatureHit(dt);
 			arrangeObjectHit(dt);
 			arrangeMovement(dt);
@@ -440,9 +440,9 @@ public class Slime extends Creature implements Run{
 	 *		|if(getWaterTime() >= Constant.SLIME_WATER_TIME.getValue()) then setWaterTime(0.0)
 	 */
 	private void arrangeFeatureHit(double dt) {
-		if(getHitPoints() == 0) return;
+		if(getPoints() == 0) return;
 		Boolean[] features =  getFeatureScore();
-		if(features[0]) {super.updateHitPoints(-getHitPoints()); return;}
+		if(features[0]) {super.updateHitPoints(-getPoints()); return;}
 		if(features[1]) {
 			setGasTime(getGasTime() + dt); 
 			if(getGasTime() >= Constant.SLIME_GAS_TIME.getValue()) super.updateHitPoints((int) Constant.SLIME_GAS.getValue());
@@ -524,7 +524,7 @@ public class Slime extends Creature implements Run{
 	}
 
 	public void arrangeSharkHit(double dt) {
-		if(getBlockTime() == 0) updateHitPoints(-getHitPoints());
+		if(getBlockTime() == 0) updateHitPoints(-getPoints());
 		setBlockTime(getBlockTime() + dt);
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 			setBlockTime(0.0);

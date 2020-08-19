@@ -2,7 +2,7 @@ package jumpingalien.model;
 
 import be.kuleuven.cs.som.annotate.Basic;
 
-public class Position <T extends  Number> {
+public class Position <T extends  Number> implements Cloneable{
 	
 	private T x;
 	private T y;
@@ -36,6 +36,10 @@ public class Position <T extends  Number> {
 	public void setPosition(T x, T y) {
 		this.setX(x);
 		this.setY(y);
+	}
+	
+	public Position<T> clone(){
+		return new Position<T>(x,y);
 	}
 
 }

@@ -37,43 +37,9 @@ public abstract class Plant extends Organism{
 	 */
 	@Model
 	protected Plant(int pixelLeftX, int pixelBottomY, int point, Sprite... sprites) {
-		super(pixelLeftX, pixelBottomY, sprites); 
-		this.hitPoint = new HitPoint(point, 0, point);
-	}
-	
-	/**
-	 * This method returns a representation of the HitPoint
-	 * 
-	 * @return ...
-	 * 		| result == hitPoint
-	 */
-	public HitPoint getHitPoint() {
-		return hitPoint;
-	}
-	
-	/**
-	 * This method returns the number of HitPoint
-	 * 
-	 * @return ...
-	 * 		| result == hitPoint.getPoint() 
-	 */
-	@Basic
-	public int getHit() {
-		return hitPoint.getPoints();
+		super(pixelLeftX, pixelBottomY, point, 0, point, sprites); 
 	}
 
-	/**
-	 * This method is used to set the HitPoint
-	 * 
-	 * @param hitPoint
-	 * 			This parameter is used as the HitPoint
-	 * 
-	 * @post ...
-	 * 		| (new this).hitPoint = hitPoint
-	 */
-	public void setHitPoint(HitPoint hitPoint) {
-		this.hitPoint = hitPoint;
-	}
 
 	/**
 	 * This method returns Age
@@ -163,8 +129,8 @@ public abstract class Plant extends Organism{
 	 */
 	@Override
 	public boolean isDead() {
-		if(this instanceof Sneezewort) return getHit() == 0 || getAge() >= SNEEZE_AGE;
-		if(this instanceof Skullcab)   return getHit() == 0 || getAge() >= SKULL_AGE;
+		if(this instanceof Sneezewort) return getPoints() == 0 || getAge() >= SNEEZE_AGE;
+		if(this instanceof Skullcab)   return getPoints() == 0 || getAge() >= SKULL_AGE;
 		return false;
 	}
 	

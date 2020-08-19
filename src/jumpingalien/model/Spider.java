@@ -47,7 +47,7 @@ public class Spider extends Organism implements Run, Jump{
 	 * 		| this.legs = new Legs(0, nbLegs)
 	 */
 	public Spider(int nbLegs, int pixelLeftX, int pixelBottomY, Sprite... sprites) throws IllegalArgumentException{
-		super(pixelLeftX, pixelBottomY, sprites);
+		super(pixelLeftX, pixelBottomY, 0, 0, 0, sprites);
 		if(sprites.length != 3 || nbLegs < 0) throw new IllegalArgumentException();
 		this.legs = nbLegs;
 	}
@@ -126,10 +126,8 @@ public class Spider extends Organism implements Run, Jump{
 			kinematics.setYVelocity(-(JUMP_VEL + 0.25*getLegs()));
 			setSprite(2);
 		}
-		double newY = this.getPosition().getY() + (kinematics.getYVelocity()*deltaT) + (kinematics.getYAcceleration()*deltaT*deltaT/2);
 		kinematics.updateYVelocity(deltaT);
-		super.getPosition().setY(newY);
-		super.getRectangle().setOrigin(getRectangle().getXCoordinate(), (int)(super.getPosition().getY()/0.01));
+		super.updateVerticalComponent(this.getPosition().getY() + (kinematics.getYVelocity()*deltaT) + (kinematics.getYAcceleration()*deltaT*deltaT/2));
 	}
 
 	/**
@@ -231,8 +229,7 @@ public class Spider extends Organism implements Run, Jump{
 	@Override @Raw
 	public void run(double deltaT) {
 		double newX = this.getPosition().getX() + super.kinematics.getXVelocity()*deltaT;
-		super.getPosition().setX(newX);
-		super.getRectangle().setOrigin((int)(super.getPosition().getX()/0.01), getRectangle().getYCoordinate());
+		super.updateHorizontalComponent(newX);
 	}
 
 	/**
@@ -325,7 +322,7 @@ public class Spider extends Organism implements Run, Jump{
 		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
 		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
-			if(getDelay() >= REMOVE_DELAY) terminate();
+			if(getDelay() >= Constant.REMOVE_DELAY.getValue()) terminate();
 			arrangeFeatureHit(dt);
 			arrangeObjectHit(dt);
 			arrangeMovement(dt);
@@ -479,7 +476,12 @@ public class Spider extends Organism implements Run, Jump{
 		return getLegs() < 2;
 	}
 
-	/**
+	/**@Basic
+	public Position<Double> getPosition() {
+		return position;
+	}
+	
+	
 	 * This method returns the orientation of the spider
 	 * 
 	 * @return ...

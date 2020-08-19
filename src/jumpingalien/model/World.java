@@ -85,7 +85,7 @@ public class World implements FeatureHandler{
 	 *		|	new SpiderMazubHandler(), new SpiderSharkHandler(), new SpiderSlimeHandler(), new SneezewortMazubHandler(), new SkullcabMazubHandler()))
 	 *
 	 */
-	public World(int maxObjects, int tileSize, int nbTilesX, int nbTilesY, int[] target, int visibleWidth, int visibleHeight, int... geologicalFeatures) throws IllegalArgumentException{
+	public World(int tileSize, int nbTilesX, int nbTilesY, int[] target, int visibleWidth, int visibleHeight, int maxObjects, int... geologicalFeatures) throws IllegalArgumentException{
 		if(tileSize <= 0) tileSize = Math.abs(tileSize);
 		if(nbTilesX < 0 ) nbTilesX = Math.abs(nbTilesX);
 		if(nbTilesY < 0 ) nbTilesY = Math.abs(nbTilesY);

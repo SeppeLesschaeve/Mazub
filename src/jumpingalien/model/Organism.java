@@ -22,15 +22,31 @@ import jumpingalien.util.Sprite;
  */
 public abstract class Organism extends GameObject{
 	
-	protected HitPoint hitPoint;
+	private HitPoint hitPoint;
 	private double blockTime = 0.0;
 	private double delay = 0.0;
-	protected static final double REMOVE_DELAY = 0.6;
 	protected Kinematics kinematics = new Kinematics() ;
 
 	@Model
-	protected Organism(int x, int y, Sprite... sprites) throws IllegalArgumentException{
+	protected Organism(int x, int y, int initPoints, int minPoints, int maxPoints, Sprite... sprites) throws IllegalArgumentException{
 		super(x,y, sprites);
+		this.setHitPoint(initPoints, minPoints, maxPoints);
+	}
+	
+	public HitPoint getHitPoints() {
+		return hitPoint.clone();
+	}
+
+	public int getPoints() {
+		return hitPoint.getPoints();
+	}
+	
+	public void setHitPoint(int initPoints, int minPoints, int maxPoints) {
+		this.hitPoint = new HitPoint(initPoints, minPoints, maxPoints);
+	}
+	
+	public void updateHitPoints(int points) {
+		this.hitPoint.updatePoints(points);
 	}
 	
 	public double[] getAcceleration() {
@@ -50,21 +66,21 @@ public abstract class Organism extends GameObject{
 			index = ((getSprites().length-8)/2)+8;
 		}
 		setSprite(getSprites()[index]);
-		this.getRectangle().setWidth(getSprite().getWidth());
-		this.getRectangle().setHeight(getSprite().getHeight());
+		super.updateDimension(getSprite().getWidth(),getSprite().getHeight());
 	}
 	
 	public double getDelay() {
-		return delay;
+		return Double.valueOf(delay);
 	}
 
 	public void setDelay(double delay) {
 		this.delay += delay;
-		if(this.delay > REMOVE_DELAY) this.delay = REMOVE_DELAY;
+		if(this.delay > Constant.REMOVE_DELAY.getValue()) 
+			this.delay = Constant.REMOVE_DELAY.getValue();
 	}
 	
 	public double getBlockTime() {
-		return blockTime;
+		return Double.valueOf(blockTime);
 	}
 
 	public void setBlockTime(double blockTime) {
@@ -83,10 +99,7 @@ public abstract class Organism extends GameObject{
 		if(this instanceof Slime && ((Slime) this).getSchool() != null) {
 			((Slime) this).getSchool().removeSlime(((Slime) this));
 		}
-		if(this instanceof Creature && ((Creature)this).getHitPoints() != 0) 
-			((Creature) this).updateHitPoints(-((Creature)this).getHitPoints());
-		if(this instanceof Plant && ((Plant)this).getHit() != 0) 
-			((Plant) this).getHitPoint().updatePoints(-((Plant)this).getHit());
+		if(getPoints() != 0) updateHitPoints(-getPoints());
 		if(this instanceof Spider) ((Spider) this).setLegs(0);
 		if(getWorld() == null) return;
 		if(this == getWorld().getPlayer()) this.getWorld().unsetPlayer();
@@ -147,8 +160,7 @@ public abstract class Organism extends GameObject{
 				}
 			}
 		}
-		getPosition().setPosition(newPosition[0], newPosition[1]);
-		getRectangle().setOrigin((int)(newPosition[0]/0.01), (int)(newPosition[1]/0.01));
+		super.updatePosition(newPosition[0], newPosition[1]);
 		if(getWorld() != null && !getWorld().getGameWorld().contains(getRectangle().getOrigin())) terminate();
 	}
 	

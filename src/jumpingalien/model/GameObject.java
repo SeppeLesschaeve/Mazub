@@ -9,7 +9,7 @@ public abstract class GameObject {
 	
 	private Rectangle rectangle;
 	private Position<Double> position;
-	private Sprite getSprite;
+	private Sprite image;
 	private Sprite[] animationImages;
 	private World world;
 	
@@ -18,8 +18,8 @@ public abstract class GameObject {
 		for(Sprite sprite: sprites)
 			if(sprite == null) throw new IllegalArgumentException();
 		this.animationImages = sprites.clone();
-		this.getSprite = animationImages[0];
-		this.rectangle = new Rectangle(xCoordinate, yCoordinate, getSprite.getWidth(), getSprite.getHeight());
+		this.image = animationImages[0];
+		this.rectangle = new Rectangle(xCoordinate, yCoordinate, image.getWidth(), image.getHeight());
 		this.position = new Position<>(xCoordinate*0.01, yCoordinate*0.01);
 	}
 	
@@ -33,12 +33,46 @@ public abstract class GameObject {
 	}
 
 	public Rectangle getRectangle() {
-		return rectangle;
+		return rectangle.clone();
+	}
+	
+	public void updateHorizontalComponent(double x) {
+		rectangle.updateHorizontalComponent((int)(x/0.01));
+		position.setX(x);
+	}
+	
+	public void updateHorizontalComponent(int x) {
+		rectangle.updateHorizontalComponent(x);
+		position.setX(x*0.01);
+	}
+	
+	public void updateVerticalComponent(double y) {
+		rectangle.updateVerticalComponent((int)(y/0.01));
+		position.setY(y);
+	}
+	
+	public void updateVerticalComponent(int y) {
+		rectangle.updateVerticalComponent(y);
+		position.setY(y*0.01);
+	}
+	
+	public void updateDimension(int x, int y) {
+		rectangle.setDimension(x, y);
+	}
+	
+	public void updatePosition(int x, int y) {
+		updateHorizontalComponent(x);
+		updateVerticalComponent(y);
+	}
+	
+	public void updatePosition(double x, double y) {
+		updateHorizontalComponent(x);
+		updateVerticalComponent(y);
 	}
 	
 	@Basic
 	public Position<Double> getPosition() {
-		return position;
+		return position.clone();
 	}
 	
 	@Basic
@@ -52,11 +86,11 @@ public abstract class GameObject {
 
 	@Basic
 	public Sprite getSprite() {
-		return getSprite;
+		return image;
 	}
 	
 	protected void setSprite(Sprite sprite) {
-		this.getSprite = sprite;
+		this.image = sprite;
 	}
 	
 	protected abstract void setSprite(int index);

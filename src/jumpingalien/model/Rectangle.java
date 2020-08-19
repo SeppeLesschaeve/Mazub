@@ -2,7 +2,7 @@ package jumpingalien.model;
 
 import be.kuleuven.cs.som.annotate.Basic;
 
-public class Rectangle{
+public class Rectangle implements Cloneable{
 	
 	private Position<Integer> origin;
 	private int width;
@@ -27,6 +27,14 @@ public class Rectangle{
 	
 	public int getYCoordinate() {
 		return this.origin.getY();
+	}
+	
+	public void updateHorizontalComponent(int x) {
+		this.origin.setX(x);
+	}
+	
+	public void updateVerticalComponent(int y) {
+		this.origin.setY(y);
 	}
 	
 	public void setOrigin(int x, int y) {
@@ -70,4 +78,9 @@ public class Rectangle{
 				|| this.origin.getX() + getWidth() - 1 < other.origin.getX() 
 				|| this.origin.getX() > other.origin.getX() + other.getWidth() - 1));
 	}
+
+	public Rectangle clone() {
+		return new Rectangle(origin, width, height);
+	}
+
 }

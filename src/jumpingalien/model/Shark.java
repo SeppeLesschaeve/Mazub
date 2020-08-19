@@ -270,7 +270,7 @@ public class Shark extends Creature implements Run, Jump{
 		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
 		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
-			if(getDelay() >= REMOVE_DELAY) terminate();
+			if(getDelay() >= Constant.REMOVE_DELAY.getValue()) terminate();
 			arrangeFeatureHit(dt);
 			arrangeObjectHit(dt);
 			arrangeMovement(dt);
