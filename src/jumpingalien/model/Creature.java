@@ -32,9 +32,9 @@ public abstract class Creature extends Organism {
 
 	@Basic @Override
 	public int getOrientation() {
-		if(kinematics.getHorizontalVelocity() < 0 || kinematics.getHorizontalAcceleration() < 0) {
+		if(kinematics.getXVelocity() < 0 || kinematics.getXAcceleration() < 0) {
 			return -1;
-		}else if (kinematics.getHorizontalVelocity() > 0 || kinematics.getHorizontalAcceleration() > 0) {
+		}else if (kinematics.getXVelocity() > 0 || kinematics.getXAcceleration() > 0) {
 			return 1;
 		}
 		return 0;
@@ -42,8 +42,8 @@ public abstract class Creature extends Organism {
 
 	@Override
 	protected double updateDt(double deltaT, double time) {
-		double result = 0.01 / ( Math.sqrt( Math.pow(kinematics.getHorizontalVelocity(), 2) + Math.pow(kinematics.getVerticalVelocity(), 2) ) + 
-				(Math.sqrt( Math.pow(kinematics.getHorizontalAcceleration(), 2) + Math.pow(kinematics.getVerticalAcceleration(), 2) ) * deltaT) );
+		double result = 0.01 / ( Math.sqrt( Math.pow(kinematics.getXVelocity(), 2) + Math.pow(kinematics.getYVelocity(), 2) ) + 
+				(Math.sqrt( Math.pow(kinematics.getXAcceleration(), 2) + Math.pow(kinematics.getYAcceleration(), 2) ) * deltaT) );
 		if(Double.isInfinite(result) || result > 0.01) {
 			result = 0.01;
 		}
@@ -54,13 +54,13 @@ public abstract class Creature extends Organism {
 	}
 	
 	protected void updateX(double dt) {
-		double newX = this.getPosition().getX() + (kinematics.getHorizontalVelocity()*dt)+ (kinematics.getHorizontalAcceleration()*dt*dt/2);
+		double newX = this.getPosition().getX() + (kinematics.getXVelocity()*dt)+ (kinematics.getXAcceleration()*dt*dt/2);
 		super.getPosition().setX(newX);
 		super.getRectangle().getOrigin().setX((int)(newX/0.01));
 	}
 	
 	protected void updateY(double dt) {
-		double newY = this.getPosition().getY() + (kinematics.getVerticalVelocity()*dt) + (kinematics.getVerticalAcceleration()*dt*dt/2);
+		double newY = this.getPosition().getY() + (kinematics.getYVelocity()*dt) + (kinematics.getYAcceleration()*dt*dt/2);
 		super.getPosition().setY(newY);
 		this.getRectangle().getOrigin().setY((int)(newY/0.01));
 	}

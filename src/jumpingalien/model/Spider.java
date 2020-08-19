@@ -119,15 +119,15 @@ public class Spider extends Organism implements Run, Jump{
 	 */
 	@Override @Raw
 	public void jump(double deltaT){
-		if(kinematics.getVerticalVelocity() > 0) { 
-			kinematics.setVerticalVelocity(JUMP_VEL + 0.25*getLegs());
+		if(kinematics.getYVelocity() > 0) { 
+			kinematics.setYVelocity(JUMP_VEL + 0.25*getLegs());
 			setSprite(1);
-		}else if(kinematics.getVerticalVelocity() < 0){ 
-			kinematics.setVerticalVelocity(-(JUMP_VEL + 0.25*getLegs()));
+		}else if(kinematics.getYVelocity() < 0){ 
+			kinematics.setYVelocity(-(JUMP_VEL + 0.25*getLegs()));
 			setSprite(2);
 		}
-		double newY = this.getPosition().getY() + (kinematics.getVerticalVelocity()*deltaT) + (kinematics.getVerticalAcceleration()*deltaT*deltaT/2);
-		kinematics.updateVerticalVelocity(deltaT);
+		double newY = this.getPosition().getY() + (kinematics.getYVelocity()*deltaT) + (kinematics.getYAcceleration()*deltaT*deltaT/2);
+		kinematics.updateYVelocity(deltaT);
 		super.getPosition().setY(newY);
 		super.getRectangle().setOrigin(getRectangle().getXCoordinate(), (int)(super.getPosition().getY()/0.01));
 	}
@@ -149,15 +149,15 @@ public class Spider extends Organism implements Run, Jump{
 	 */
 	@Raw
 	public void endJump(){
-		if(kinematics.getVerticalVelocity() > 0) { 
+		if(kinematics.getYVelocity() > 0) { 
 			
-			kinematics.setVerticalAcceleration(-JUMP_ACC);
+			kinematics.setYAcceleration(-JUMP_ACC);
 			setSprite(2);
-		}else if(kinematics.getVerticalVelocity() < 0){
-			kinematics.setVerticalAcceleration(JUMP_ACC);
+		}else if(kinematics.getYVelocity() < 0){
+			kinematics.setYAcceleration(JUMP_ACC);
 			setSprite(1);
 		}
-		kinematics.setVerticalVelocity(-kinematics.getVerticalVelocity()); 
+		kinematics.setYVelocity(-kinematics.getYVelocity()); 
 	}
 
 	/**
@@ -193,7 +193,7 @@ public class Spider extends Organism implements Run, Jump{
 	 *		| result == super.kinematics.getVerticalVelocity() > 0
 	 */
 	public boolean isJumping() {
-		return kinematics.getVerticalVelocity() > 0;
+		return kinematics.getYVelocity() > 0;
 	}
 	
 	/**
@@ -203,7 +203,7 @@ public class Spider extends Organism implements Run, Jump{
 	 * 		| result == super.kinematics.getVerticalVelocity() <= 0 && getAcceleration().getY() != 0
 	 */
 	public boolean isFalling() {
-		return kinematics.getVerticalVelocity() <= 0 && kinematics.getVerticalAcceleration() != 0;
+		return kinematics.getYVelocity() <= 0 && kinematics.getYAcceleration() != 0;
 	}
 	
 	/**
@@ -230,7 +230,7 @@ public class Spider extends Organism implements Run, Jump{
 	 */
 	@Override @Raw
 	public void run(double deltaT) {
-		double newX = this.getPosition().getX() + super.kinematics.getHorizontalVelocity()*deltaT;
+		double newX = this.getPosition().getX() + super.kinematics.getXVelocity()*deltaT;
 		super.getPosition().setX(newX);
 		super.getRectangle().setOrigin((int)(super.getPosition().getX()/0.01), getRectangle().getYCoordinate());
 	}
@@ -247,8 +247,8 @@ public class Spider extends Organism implements Run, Jump{
 	 * 
 	 */
 	public void endRun() {
-		if(kinematics.getHorizontalVelocity() > 0) kinematics.setHorizontalVelocity(getLegs()*-0.15);
-		else if(kinematics.getHorizontalVelocity() < 0) kinematics.setHorizontalVelocity(getLegs()*0.15);
+		if(kinematics.getXVelocity() > 0) kinematics.setXVelocity(getLegs()*-0.15);
+		else if(kinematics.getXVelocity() < 0) kinematics.setXVelocity(getLegs()*0.15);
 	}
 	
 	/**
@@ -317,11 +317,11 @@ public class Spider extends Organism implements Run, Jump{
 	@Override
 	public void advanceTime(double deltaT) throws IllegalArgumentException{
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		if(kinematics.getVerticalAcceleration() == 0.0 && isAbleToJump()) {
-			kinematics.setVerticalVelocity(JUMP_VEL); 
-			kinematics.setVerticalAcceleration(JUMP_ACC);
+		if(kinematics.getYAcceleration() == 0.0 && isAbleToJump()) {
+			kinematics.setYVelocity(JUMP_VEL); 
+			kinematics.setYAcceleration(JUMP_ACC);
 		}
-		if(kinematics.getHorizontalVelocity() == 0.0 && isAbleToRun()) kinematics.setHorizontalVelocity(-(0.15*getLegs()));
+		if(kinematics.getXVelocity() == 0.0 && isAbleToRun()) kinematics.setXVelocity(-(0.15*getLegs()));
 		for(double time = 0.0, dt = updateDt(deltaT, time); time < deltaT; time += dt, dt = updateDt(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
 			if(getDelay() >= REMOVE_DELAY) terminate();
@@ -489,8 +489,8 @@ public class Spider extends Organism implements Run, Jump{
 	 */
 	@Override
 	public int getOrientation() {
-		if(kinematics.getVerticalVelocity() < 0 || kinematics.getHorizontalVelocity() < 0) return -1;
-		else if(kinematics.getVerticalVelocity() > 0 || kinematics.getHorizontalVelocity() > 0) return 1;
+		if(kinematics.getYVelocity() < 0 || kinematics.getXVelocity() < 0) return -1;
+		else if(kinematics.getYVelocity() > 0 || kinematics.getXVelocity() > 0) return 1;
 		else return 0;
 	}
 
@@ -512,8 +512,8 @@ public class Spider extends Organism implements Run, Jump{
 	 *	
 	 */
 	protected double updateDt(double deltaT, double time) {
-		double result = 0.01 / ( Math.sqrt( Math.pow(kinematics.getHorizontalVelocity(), 2) + Math.pow(kinematics.getVerticalVelocity(), 2) ) + 
-				( Math.sqrt(deltaT) * Math.pow(kinematics.getVerticalAcceleration(), 2) ));
+		double result = 0.01 / ( Math.sqrt( Math.pow(kinematics.getXVelocity(), 2) + Math.pow(kinematics.getYVelocity(), 2) ) + 
+				( Math.sqrt(deltaT) * Math.pow(kinematics.getYAcceleration(), 2) ));
 		if(Double.isInfinite(result) || result > 0.01) {
 			result = 0.01;
 		}
@@ -534,11 +534,11 @@ public class Spider extends Organism implements Run, Jump{
 	public void arrangeMazubHit(double dt) {
 		setLegs(getLegs() - 1);
 		if(isRunning()) {
-			kinematics.setHorizontalVelocity(0);
+			kinematics.setXVelocity(0);
 		}
 		if(isJumping() || isFalling()) {
-			kinematics.setVerticalAcceleration(0);
-			kinematics.setVerticalVelocity(0);
+			kinematics.setYAcceleration(0);
+			kinematics.setYVelocity(0);
 		}
 	}
 
@@ -557,11 +557,11 @@ public class Spider extends Organism implements Run, Jump{
 			setBlockTime(0.0);
 		}
 		if(isRunning()) {
-			kinematics.setHorizontalVelocity(0);
+			kinematics.setXVelocity(0);
 		}
 		if(isJumping() || isFalling()) {
-			kinematics.setVerticalAcceleration(0);
-			kinematics.setVerticalVelocity(0);
+			kinematics.setYAcceleration(0);
+			kinematics.setYVelocity(0);
 		}
 	}
 	

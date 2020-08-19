@@ -26,105 +26,7 @@ public abstract class Organism extends GameObject{
 	private double blockTime = 0.0;
 	private double delay = 0.0;
 	protected static final double REMOVE_DELAY = 0.6;
-	protected Kinematics kinematics = new Kinematics() {
-		
-		private double horizontalAcceleration;
-		private double verticalAcceleration;
-		private double horizontalVelocity;
-		private double verticalVelocity;
-		private double minimumHorizontalVelocity;
-		private double maximumHorizontalVelocity;
-
-		@Override
-		public double getHorizontalAcceleration() {
-			return Double.valueOf(horizontalAcceleration);
-		}
-
-		@Override
-		public double getVerticalAcceleration() {
-			return Double.valueOf(verticalAcceleration);
-		}
-
-		@Override
-		public void setHorizontalAcceleration(double x) {
-			this.horizontalAcceleration = x;
-		}
-
-		@Override
-		public void setVerticalAcceleration(double y) {
-			this.verticalAcceleration = y;
-		}
-
-		@Override
-		public double getHorizontalVelocity() {
-			return Double.valueOf(horizontalVelocity);
-		}
-
-		@Override
-		public double getVerticalVelocity() {
-			return Double.valueOf(verticalVelocity);
-		}
-
-		@Override
-		public void setHorizontalVelocity(double x) {
-			this.horizontalVelocity = x;
-		}
-
-		@Override
-		public void setVerticalVelocity(double y) {
-			this.verticalVelocity = y;
-		}
-
-		@Override
-		public double getMinimumHorizontalVelocity() {
-			return Double.valueOf(minimumHorizontalVelocity);
-		}
-
-		@Override
-		public void setMinimumHorizontalVelocity(double min) {
-			this.minimumHorizontalVelocity = min;
-		}
-
-		@Override
-		public double getMaximumHorizontalVelocity() {
-			return Double.valueOf(maximumHorizontalVelocity);
-		}
-
-		@Override
-		public void setMaximumHorizontalVelocity(double max) {
-			if(Math.abs(max) < Math.abs(getMinimumHorizontalVelocity())) this.maximumHorizontalVelocity = getMinimumHorizontalVelocity();
-			else this.maximumHorizontalVelocity = max;
-		}
-
-		@Override
-		public void setHorizontalBoundaries(double min, double max) {
-			this.setMinimumHorizontalVelocity(min);
-			this.setMaximumHorizontalVelocity(max);
-		}
-		
-		@Override
-		public void enforceHorizontalBoundaries() {
-			if(Math.abs(horizontalVelocity) < Math.abs(getMinimumHorizontalVelocity())) {
-				setHorizontalVelocity(getMinimumHorizontalVelocity()*Math.signum(horizontalVelocity));
-			}
-			if(Math.abs(horizontalVelocity) > Math.abs(getMaximumHorizontalVelocity())) {
-				setHorizontalVelocity(getMaximumHorizontalVelocity()*Math.signum(horizontalVelocity));
-			}
-		}
-
-		@Override
-		public void updateHorizontalVelocity(double time) {
-			horizontalVelocity += horizontalAcceleration*time;
-			this.enforceHorizontalBoundaries();
-		}
-
-		@Override
-		public void updateVerticalVelocity(double time) {
-			verticalVelocity += verticalAcceleration*time;
-			this.enforceHorizontalBoundaries();	
-		}
-		
-	};
+	protected Kinematics kinematics = new Kinematics() ;
 
 	@Model
 	protected Organism(int x, int y, Sprite... sprites) throws IllegalArgumentException{
@@ -132,11 +34,11 @@ public abstract class Organism extends GameObject{
 	}
 	
 	public double[] getAcceleration() {
-		return new double[] {kinematics.getHorizontalAcceleration(), kinematics.getVerticalAcceleration()};
+		return new double[] {kinematics.getXAcceleration(), kinematics.getYAcceleration()};
 	}
 	
 	public double[] getVelocity() {
-		return new double[] {kinematics.getHorizontalVelocity(), kinematics.getVerticalVelocity()};
+		return new double[] {kinematics.getXVelocity(), kinematics.getYVelocity()};
 	}
 	
 	protected void setSprite(int index){
@@ -170,7 +72,7 @@ public abstract class Organism extends GameObject{
 	}
 
 	public boolean isRunning() {
-		return kinematics.getHorizontalVelocity() != 0;
+		return kinematics.getXVelocity() != 0;
 	}
 
 	public abstract int getOrientation();
@@ -268,7 +170,7 @@ public abstract class Organism extends GameObject{
 	
 	protected Set<Organism> getCollidingObjects() {
 		Set<Organism> objects;
-		if(kinematics.getVerticalVelocity() > 0) {
+		if(kinematics.getYVelocity() > 0) {
 			objects = overlappingGameObject(getUpBorder());
 			if(getOrientation() ==  -1) objects.addAll(overlappingGameObject(getLeftBorder()));
 			else if(getOrientation() == 1) objects.addAll(overlappingGameObject(getRightBorder()));

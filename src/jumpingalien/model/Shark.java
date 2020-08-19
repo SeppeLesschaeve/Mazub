@@ -59,9 +59,9 @@ public class Shark extends Creature implements Run, Jump{
 		if(sprites.length != 3) {
 			throw new IllegalArgumentException("You can not have more or less than three sprites for a shark");
 		}
-		kinematics.setHorizontalBoundaries(0.0, Double.POSITIVE_INFINITY);
-		kinematics.setHorizontalAcceleration(-X_ACC);
-		kinematics.setVerticalAcceleration(Y_ACC);
+		kinematics.setXVelocityBounds(0.0, Double.POSITIVE_INFINITY);
+		kinematics.setXAcceleration(-X_ACC);
+		kinematics.setYAcceleration(Y_ACC);
 	}
 	
 	/**
@@ -178,7 +178,7 @@ public class Shark extends Creature implements Run, Jump{
 	@Override @Raw
 	public void jump(double deltaT){
 		super.updateY(deltaT); 
-		kinematics.updateVerticalVelocity(deltaT);
+		kinematics.updateYVelocity(deltaT);
 	}
 
 	/**
@@ -193,11 +193,11 @@ public class Shark extends Creature implements Run, Jump{
 	 */
 	@Raw
 	public void endJump(){
-		if(kinematics.getVerticalVelocity() > 0.0) {
-			kinematics.setVerticalVelocity(0.0);
+		if(kinematics.getYVelocity() > 0.0) {
+			kinematics.setYVelocity(0.0);
 		}else {
-			kinematics.setVerticalAcceleration(0.0);
-			kinematics.setVerticalVelocity(0.0);
+			kinematics.setYAcceleration(0.0);
+			kinematics.setYVelocity(0.0);
 		}
 	}
 
@@ -214,9 +214,9 @@ public class Shark extends Creature implements Run, Jump{
 	@Override @Raw
 	public void run(double deltaT) {
 		super.updateX(deltaT); 
-		kinematics.updateHorizontalVelocity(deltaT);
-		if(kinematics.getHorizontalVelocity() > 0) super.setSprite(2);
-		else if(kinematics.getHorizontalVelocity() < 0) super.setSprite(1);
+		kinematics.updateXVelocity(deltaT);
+		if(kinematics.getXVelocity() > 0) super.setSprite(2);
+		else if(kinematics.getXVelocity() < 0) super.setSprite(1);
 	}
 
 	/**
@@ -229,8 +229,8 @@ public class Shark extends Creature implements Run, Jump{
 	 * 		| super.getVelocity().setX(0.0) && super.getAcceleration().setX(0.0)
 	 */
 	public void endRun() {
-		kinematics.setHorizontalAcceleration(0.0);
-		kinematics.setHorizontalVelocity(0.0);
+		kinematics.setXAcceleration(0.0);
+		kinematics.setXVelocity(0.0);
 	}
 
 	/**
@@ -262,11 +262,11 @@ public class Shark extends Creature implements Run, Jump{
 	public void advanceTime(double deltaT) throws IllegalArgumentException{
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT >= 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
 		if(getMoveTime() == 0 &&  getRestTime() == 0) {
-			super.setSprite(1); kinematics.setVerticalAcceleration(Y_ACC);
+			super.setSprite(1); kinematics.setYAcceleration(Y_ACC);
 			if(getWorld() == null || (!super.getWorld().shallBePassable(getDownBorder()) || swimsInWater())) 
-				kinematics.setVerticalVelocity(Y_VEL); else kinematics.setVerticalVelocity(0.0);
+				kinematics.setYVelocity(Y_VEL); else kinematics.setYVelocity(0.0);
 		}
-		if(mustFall()) kinematics.setVerticalAcceleration(Y_ACC);
+		if(mustFall()) kinematics.setYAcceleration(Y_ACC);
 		for(double time = 0.0, dt = super.updateDt(deltaT, time); time < deltaT; time += dt, dt = super.updateDt(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
 			if(getDelay() >= REMOVE_DELAY) terminate();
@@ -306,8 +306,8 @@ public class Shark extends Creature implements Run, Jump{
 		}else {
 			if(getRestTime() < Constant.SHARK_REST_TIME.getValue()) setRestTime(getRestTime() + dt);
 			super.setSprite(0); 
-			kinematics.setHorizontalAcceleration(0.0); 
-			kinematics.setHorizontalVelocity(0.0);
+			kinematics.setXAcceleration(0.0); 
+			kinematics.setXVelocity(0.0);
 			if(getRestTime() >= Constant.SHARK_REST_TIME.getValue()) {
 				arrangeNewMoveTime();
 				setRestTime(0.0); setMoveTime(0.0);
@@ -328,11 +328,11 @@ public class Shark extends Creature implements Run, Jump{
 	 */
 	private void arrangeNewMoveTime() {
 		setNewIndex();
-		if(getNewIndex() == 2) kinematics.setHorizontalAcceleration(X_ACC); 
-		else kinematics.setHorizontalAcceleration(-X_ACC);
+		if(getNewIndex() == 2) kinematics.setXAcceleration(X_ACC); 
+		else kinematics.setXAcceleration(-X_ACC);
 		if(canStartJump()) {
-			kinematics.setVerticalAcceleration(Y_ACC);
-			kinematics.setVerticalVelocity(Y_VEL);
+			kinematics.setYAcceleration(Y_ACC);
+			kinematics.setYVelocity(Y_VEL);
 		}
 	}
 	
@@ -348,8 +348,8 @@ public class Shark extends Creature implements Run, Jump{
 	 */
 	@Override
 	protected boolean canJump() {
-		if(kinematics.getVerticalAcceleration() == 0) return false;
-		if(kinematics.getVerticalVelocity() > 0)
+		if(kinematics.getYAcceleration() == 0) return false;
+		if(kinematics.getYVelocity() > 0)
 			return super.overlappingGameObject(getUpBorder()).isEmpty() && super.getWorld().shallBePassable(getUpBorder());
 		else 
 			return mustFall();
@@ -363,7 +363,7 @@ public class Shark extends Creature implements Run, Jump{
 	 */
 	@Override
 	public boolean isRunning() {
-		return kinematics.getHorizontalAcceleration() != 0;
+		return kinematics.getXAcceleration() != 0;
 	}
 	
 	/**
@@ -384,7 +384,7 @@ public class Shark extends Creature implements Run, Jump{
 	 * 		| result ==  kinematics.getVerticalAcceleration() != 0
 	 */
 	private boolean isJumping() {
-		return kinematics.getVerticalAcceleration() != 0;
+		return kinematics.getYAcceleration() != 0;
 	}
 
 	/**
@@ -452,12 +452,12 @@ public class Shark extends Creature implements Run, Jump{
 	 * 		| this.getAcceleration().setX(0.0) && this.setNewIndex() && this.getVelocity().setX(0.0)
 	 */
 	private void arrangeSwitch(Shark shark) {
-		shark.kinematics.setHorizontalAcceleration(0.0);
+		shark.kinematics.setXAcceleration(0.0);
 		shark.setNewIndex();
-		shark.kinematics.setHorizontalVelocity(0.0);
-		kinematics.setHorizontalAcceleration(0.0);
+		shark.kinematics.setXVelocity(0.0);
+		kinematics.setXAcceleration(0.0);
 		setNewIndex();
-		kinematics.setHorizontalVelocity(0.0);
+		kinematics.setXVelocity(0.0);
 	}
 
 	/**
@@ -495,7 +495,7 @@ public class Shark extends Creature implements Run, Jump{
 	 *		| result == super.overlappingGameObject(down).isEmpty()
 	 */
 	private boolean mustFall() {
-		if(getWorld() == null || kinematics.getVerticalVelocity() > 0) return false; 
+		if(getWorld() == null || kinematics.getYVelocity() > 0) return false; 
 		Rectangle up = super.getUpBorder();
 		for(int pixelX = up.getOrigin().getX(); pixelX < up.getOrigin().getX()+ up.getWidth(); pixelX++) {
 			if(getWorld().getTileFeature(pixelX, up.getOrigin().getY()) == Feature.WATER) return false;

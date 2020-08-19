@@ -51,8 +51,8 @@ public class Skullcab extends Plant implements Jump{
 	 */
 	@Basic
 	public int getOrientation() {
-		if(kinematics.getVerticalVelocity() < 0) return -1;
-		else if(kinematics.getVerticalVelocity() > 0) return 1;
+		if(kinematics.getYVelocity() < 0) return -1;
+		else if(kinematics.getYVelocity() > 0) return 1;
 		else return 0;
 	}
 	
@@ -65,8 +65,7 @@ public class Skullcab extends Plant implements Jump{
 	 */
 	@Override
 	protected void startMove() {
-		kinematics.setHorizontalVelocity(0.0);
-		kinematics.setVerticalVelocity(Y_VELOCITY);
+		kinematics.setYVelocity(Y_VELOCITY);
 	}
 	
 	/**
@@ -168,7 +167,7 @@ public class Skullcab extends Plant implements Jump{
 	@Raw
 	public void endJump(){
 		setTimer(0.0); 
-		kinematics.setVerticalVelocity(-kinematics.getVerticalVelocity()); 
+		kinematics.setXVelocity(-kinematics.getYVelocity()); 
 		super.setSprite(1-super.getIndex());
 	}
 	
@@ -184,7 +183,7 @@ public class Skullcab extends Plant implements Jump{
 	 */
 	@Override @Raw
 	public void jump(double deltaT){
-		super.getPosition().setY(super.getPosition().getY() + kinematics.getVerticalVelocity()*deltaT);
+		super.getPosition().setY(super.getPosition().getY() + kinematics.getYVelocity()*deltaT);
 		super.getRectangle().setOrigin(getRectangle().getXCoordinate(), (int)(super.getPosition().getY()/0.01));
 	}
 

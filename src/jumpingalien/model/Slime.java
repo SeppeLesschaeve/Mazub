@@ -61,8 +61,8 @@ public class Slime extends Creature implements Run{
 		super(pixelLeftX, pixelBottomY, 100, 0, Integer.MAX_VALUE, sprites);
 		if(sprites.length != 2 || id < 0 || ids.contains(id)) throw new IllegalArgumentException("You must have exactly two images");
 		this.setId(id);
-		kinematics.setHorizontalAcceleration(X_ACC);
-		kinematics.setMaximumHorizontalVelocity(X_MAX_VELOCITY);
+		kinematics.setXAcceleration(X_ACC);
+		kinematics.setMaxXVelocity(X_MAX_VELOCITY);
 		if(school != null) {
 			school.addSlime(this);
 		}
@@ -297,7 +297,7 @@ public class Slime extends Creature implements Run{
 	 */
 	@Override @Raw
 	public void run(double deltaT) {
-		super.updateX(deltaT); kinematics.updateHorizontalVelocity(deltaT);
+		super.updateX(deltaT); kinematics.updateXVelocity(deltaT);
 	}
 	
 	/**
@@ -320,8 +320,8 @@ public class Slime extends Creature implements Run{
 	public void endRun() {
 		if((getOrientation() == -1 && !super.getWorld().shallBePassable(super.getLeftBorder()))||
 				(getOrientation() == 1 && !super.getWorld().shallBePassable(super.getRightBorder()))) {
-			kinematics.setHorizontalAcceleration(0.0);
-			kinematics.setHorizontalVelocity(0.0);
+			kinematics.setXAcceleration(0.0);
+			kinematics.setXVelocity(0.0);
 		} 
 		Set<Organism> objects = new HashSet<>();
 		if(getOrientation() == -1) objects = super.overlappingGameObject(super.getLeftBorder());
@@ -330,7 +330,7 @@ public class Slime extends Creature implements Run{
 			if(object instanceof Slime && object != this) {
 				arrangeSwitch((Slime)object); break;
 			}else {
-				kinematics.setHorizontalVelocity(0.0);
+				kinematics.setXVelocity(0.0);
 			}
 		}
 	}
@@ -355,10 +355,10 @@ public class Slime extends Creature implements Run{
 	 *		|slime.setSprite(1- slime.getIndex())
 	 */
 	private void arrangeSwitch(Slime slime) {
-		slime.kinematics.setHorizontalAcceleration(-slime.kinematics.getHorizontalAcceleration());
-		this.kinematics.setHorizontalAcceleration(-kinematics.getHorizontalAcceleration());
-		slime.kinematics.setHorizontalVelocity(0.0); 
-		this.kinematics.setHorizontalVelocity(0.0);
+		slime.kinematics.setXAcceleration(-slime.kinematics.getXAcceleration());
+		this.kinematics.setXAcceleration(-kinematics.getXAcceleration());
+		slime.kinematics.setXVelocity(0.0); 
+		this.kinematics.setXVelocity(0.0);
 		if(slime.getSchool() != null) {
 			if(slime.getSchool().getSlimes().size() < getSchool().getSlimes().size()) {
 				slime.setNewSchool(this.getSchool());

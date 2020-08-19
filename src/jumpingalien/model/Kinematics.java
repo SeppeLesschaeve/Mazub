@@ -2,44 +2,87 @@ package jumpingalien.model;
 
 import be.kuleuven.cs.som.annotate.Basic;
 
-public abstract class Kinematics {
+public class Kinematics {
 	
-	@Basic
-	public abstract double getHorizontalAcceleration();
+	private double XAcceleration;
+	private double YAcceleration;
+	private double XVelocity;
+	private double YVelocity;
+	private double MinXVelocity;
+	private double MaxXVelocity;
 
-	@Basic
-	public abstract double getVerticalAcceleration();
+	public double getXAcceleration() {
+		return Double.valueOf(XAcceleration);
+	}
 
-	public abstract void setHorizontalAcceleration(double x);
+	public double getYAcceleration() {
+		return Double.valueOf(YAcceleration);
+	}
 
-	public abstract void setVerticalAcceleration(double y);
+	public void setXAcceleration(double x) {
+		this.XAcceleration = x;
+	}
+
+	public void setYAcceleration(double y) {
+		this.YAcceleration = y;
+	}
+
+	public double getXVelocity() {
+		return Double.valueOf(XVelocity);
+	}
+
+	public double getYVelocity() {
+		return Double.valueOf(YVelocity);
+	}
+
+	public void setXVelocity(double x) {
+		this.XVelocity = x;
+	}
+
+	public void setYVelocity(double y) {
+		this.YVelocity = y;
+	}
+
+	public double getMinXVelocity() {
+		return Double.valueOf(MinXVelocity);
+	}
+
+	public void setMinXVelocity(double min) {
+		this.MinXVelocity = min;
+	}
+
+	public double getMaxXVelocity() {
+		return Double.valueOf(MaxXVelocity);
+	}
+
+	public void setMaxXVelocity(double max) {
+		if(Math.abs(max) < Math.abs(getMinXVelocity())) this.MaxXVelocity = getMinXVelocity();
+		else this.MaxXVelocity = max;
+	}
+
+	public void setXVelocityBounds(double min, double max) {
+		this.setMinXVelocity(min);
+		this.setMaxXVelocity(max);
+	}
 	
-	@Basic
-	public abstract double getHorizontalVelocity();
+	public void roundXVelocity() {
+		if(Math.abs(XVelocity) < Math.abs(getMinXVelocity())) {
+			setXVelocity(getMinXVelocity()*Math.signum(XVelocity));
+		}
+		if(Math.abs(XVelocity) > Math.abs(getMaxXVelocity())) {
+			setXVelocity(getMaxXVelocity()*Math.signum(XVelocity));
+		}
+	}
 
-	@Basic
-	public abstract double getVerticalVelocity();
+	public void updateXVelocity(double time) {
+		XVelocity += XAcceleration*time;
+		this.roundXVelocity();
+	}
 
-	public abstract void setHorizontalVelocity(double x);
-
-	public abstract void setVerticalVelocity(double y);
+	public void updateYVelocity(double time) {
+		YVelocity += YAcceleration*time;
+		this.roundXVelocity();	
+	}
 	
-	@Basic
-	public abstract double getMinimumHorizontalVelocity();
-
-	public abstract void setMinimumHorizontalVelocity(double min);
-	
-	@Basic
-	public abstract double getMaximumHorizontalVelocity();
-
-	public abstract void setMaximumHorizontalVelocity(double max);
-	
-	public abstract void setHorizontalBoundaries(double min, double max);
-	
-	public abstract void enforceHorizontalBoundaries();
-	
-	public abstract void updateHorizontalVelocity(double time);
-	
-	public abstract void updateVerticalVelocity(double time);
 	
 }

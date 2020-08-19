@@ -188,7 +188,7 @@ public abstract class Plant extends Organism{
 	 */
 	@Override
 	protected double updateDt(double deltaT, double time) {
-		double result =  0.01 / ( Math.sqrt( Math.pow(kinematics.getHorizontalVelocity(), 2) + Math.pow(kinematics.getVerticalVelocity(), 2) ));
+		double result =  0.01 / ( Math.sqrt( Math.pow(kinematics.getXVelocity(), 2) + Math.pow(kinematics.getYVelocity(), 2) ));
 		if(time + result > deltaT) {
 			result = deltaT-time;
 		}
