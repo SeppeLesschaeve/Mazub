@@ -1,5 +1,6 @@
 package jumpingalien.model;
 
+import java.util.Iterator;
 import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.*;
@@ -22,6 +23,9 @@ public class Mazub extends Creature implements Run, Jump{
 	
 	private double spriteTime = 0.0;
 	private double endMoveTime = 0.0;
+	private double eatTime = 0.0;
+	private double featureTime;
+	private Feature previousFeature;
 
 	private static final double MIN_X_VELOCITY = 1.0;
 	private static final double MAX_X_VELOCITY = 3.0;
@@ -588,12 +592,16 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	protected void arrangeObjectHit(double dt) {
 		Set<Organism> objects = getCollidingObjects();
+		if(objects.isEmpty()) setEatTime(0.0);
 		if(getWorld() != null) {
-			for(Organism object: objects) {
+			Iterator<Organism> iterator = objects.iterator();
+			while(iterator.hasNext()) {
+				Organism object = iterator.next();
+				boolean alive = !object.isDead();
 				int type = getGameObjectType(object);
 				switch(type) {
-				case 1:arrangeSneezeHit((Sneezewort) object, dt); break;
-				case 2:arrangeSkullHit((Skullcab) object, dt); break;
+				case 1:arrangeSneezeHit(alive, dt); iterator.remove(); break;
+				case 2:arrangeSkullHit(alive, dt); break;
 				case 3:arrangeSlimeHit(dt); break;
 				case 4:arrangeSharkHit(dt); break;
 				case 5:arrangeSpiderHit(dt); break;
@@ -676,21 +684,6 @@ public class Mazub extends Creature implements Run, Jump{
 	}
 	
 	/**
-	 * This method is used to arrange the Hit Points of the alien because of features using dt as time to determine whether Hit Points are to be changed.
-	 *
-	 * @param dt
-	 * 			This parameter is used as time
-	 * @effect If the alien is attached to a world and he the alien is not considered dead, the world will handle the feature hit
-	 * 		| if getWorld() != null && !isDead() then getWorld().handleFeatureHit(this, dt)
-	 *
-	 */
-	private void arrangeFeatureHit(double dt) {
-		if(getWorld() != null && !isDead()) {
-			getWorld().handleFeatureHit(this, dt);
-		}
-	}
-
-	/**
 	 * This method returns the End Move Time
 	 * 
 	 * @return the End Move Time will be returned
@@ -737,6 +730,14 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	protected void setSpriteTime(double spriteTime) {
 		this.spriteTime = spriteTime;
+	}
+
+	public double getEatTime() {
+		return Double.valueOf(eatTime);
+	}
+
+	public void setEatTime(double eatTime) {
+		this.eatTime = eatTime;
 	}
 
 	/**
@@ -799,34 +800,20 @@ public class Mazub extends Creature implements Run, Jump{
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) setBlockTime(0.0);
 	}
 	
-	public void arrangeSneezeHit(Sneezewort sneezewort, double dt) {
-		if(getPoints() < getHitPoints().getMaximum() && getRectangle().overlaps(sneezewort.getRectangle())) { 
-			if(sneezewort.getAge() < Plant.SNEEZE_AGE && sneezewort.getPoints() > 0) {
-				updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
-			}else if(sneezewort.getAge() >= Plant.SNEEZE_AGE && sneezewort.getPoints() > 0) {
-				updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
-			}
-			sneezewort.terminate();
+	public void arrangeSneezeHit(Boolean alive, double dt) {
+		if(getPoints() < getHitPoints().getMaximum()) { 
+			if(alive) updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
+			else updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
 		}
 	}
 	
-	public void arrangeSkullHit(Skullcab skullcab, double dt) {
-		if(!skullcab.getRectangle().overlaps(getRectangle())) {
-			skullcab.setHitTime(0); return;
+	public void arrangeSkullHit(Boolean alive, double dt) {
+		setEatTime(getEatTime() + dt);
+		if( getEatTime() >= Constant.TIMEOUT.getValue() && getPoints() < getHitPoints().getMaximum() ) {
+			if(alive) updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
+			else updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue()); 
 		}
-		if(skullcab.getHitTime() == 0 && skullcab.getPoints() != 0 && getPoints() < getHitPoints().getMaximum() ) {
-			if(skullcab.isDead()) {
-				updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
-			}else {
-				updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
-			}
-			skullcab.updateHitPoints(-1);
-		}
-		skullcab.setHitTime(skullcab.getHitTime() + dt);
-		if(skullcab.getHitTime()  >= 0.6) {
-			skullcab.setHitTime(0);
-		}
-		if(skullcab.getPoints() == 0) skullcab.terminate();
+		if(getEatTime()  >= Constant.TIMEOUT.getValue()) setEatTime(0);
 	}
 	
 	public void arrangeSharkHit(double dt) {
@@ -844,5 +831,46 @@ public class Mazub extends Creature implements Run, Jump{
 			setBlockTime(0.0);
 		}
 	}
+	
+	public void arrangeFeatureHit(double time) {
+		if(getWorld() == null || isDead()) return;
+		Feature feature = getDominantFeature();
+		if(feature != previousFeature) featureTime = 0;
+		if(feature == Feature.MAGMA) handleMagmaHit(time);
+		if(feature == Feature.GAS) handleGasHit(time);
+		if(feature == Feature.WATER) handleWaterHit(time);
+		this.previousFeature = feature;
+		if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) 
+			featureTime -= Constant.MAZUB_FEATURE_TIME.getValue();
+	}
+
+	public void handleMagmaHit(double time) {
+		if(featureTime == 0.0 && previousFeature != Feature.MAGMA) {
+			updateHitPoints((int) Constant.MAZUB_MAGMA.getValue());
+			featureTime += time;
+		}else {
+			featureTime += time; 
+			if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) 
+				updateHitPoints((int) Constant.MAZUB_MAGMA.getValue());
+		}
+	}
+
+	public void handleGasHit(double time) {
+		if(featureTime == 0.0 && previousFeature != Feature.GAS) {
+			updateHitPoints((int) Constant.MAZUB_GAS.getValue());
+			featureTime += time;
+		}else {
+			featureTime += time; 
+			if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) 
+				updateHitPoints((int) Constant.MAZUB_GAS.getValue());
+		}
+	}
+
+	public void handleWaterHit(double time) {
+		featureTime += time; 
+		if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) 
+			updateHitPoints((int) Constant.MAZUB_WATER.getValue());
+	}
+
 
 }

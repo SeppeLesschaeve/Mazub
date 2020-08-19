@@ -92,7 +92,10 @@ public class Sneezewort extends Plant implements Run{
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
 		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
 		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
-			if(!isDead()) arrangeMove(dt);
+			if(!isDead()) {
+				arrangeMove(dt);
+				arrangeEat(dt);
+			}
 			else super.setDelay(dt);
 			this.setAge(getAge() + dt);
 			time +=  dt;
@@ -161,6 +164,15 @@ public class Sneezewort extends Plant implements Run{
 		setTimer(getTimer()-Constant.PLANT_SWITCH_TIME.getValue());
 		kinematics.setXVelocity(-kinematics.getXVelocity()); 
 		super.setSprite(1-super.getIndex());
+	}
+
+	@Override
+	protected void arrangeEat(double deltaT) {
+		if(getWorld() != null && getWorld().getPlayer() != null &&
+				getRectangle().overlaps(super.getWorld().getPlayer().getRectangle())) {
+			updateHitPoints(-1);
+			terminate();
+		}
 	}
 
 }

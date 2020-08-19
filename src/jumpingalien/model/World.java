@@ -31,7 +31,7 @@ import be.kuleuven.cs.som.annotate.*;
  * @author Seppe Lesschaeve (Informatica)
  * 
  */
-public class World implements FeatureHandler{
+public class World{
 
 	private final int tileLength;
 	private Rectangle gameWorld;
@@ -42,7 +42,6 @@ public class World implements FeatureHandler{
 	private static final int MAX_SCHOOLS = 10;
 	private final int maxObjects;
 	
-	private Set<FeatureHandler> featureHandlers = new HashSet<>();
 	private Set<GameObject> gameObjects = new HashSet<>();
 	private Set<School> schools = new HashSet<>();
 	private Mazub player;
@@ -510,7 +509,6 @@ public class World implements FeatureHandler{
 		gameObjects.add(object);
 		if(object instanceof Mazub) {
 			player = (Mazub) object;
-			this.featureHandlers.add(new MazubFeatureHandler(player));
 			setWindow(getVisibleWindowWidth(), getVisibleWindowHeight());
 		}
 		if(object instanceof Slime && ((Slime) object).getSchool() != null )
@@ -678,13 +676,6 @@ public class World implements FeatureHandler{
 		}
 		for(Object gameObject : getGameObjects()) {
 			if(!(gameObject instanceof Mazub)) ((Organism) gameObject).advanceTime(deltaT);
-		}
-	}
-	
-	
-	public void handleFeatureHit(Organism object, double dt) {
-		for(FeatureHandler handler: featureHandlers) {
-			handler.<Mazub>handleFeatureHit((Mazub)object, dt);
 		}
 	}
 	

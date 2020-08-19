@@ -95,7 +95,10 @@ public class Skullcab extends Plant implements Jump{
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
 		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
 		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
-			if(!isDead()) arrangeMove(dt);
+			if(!isDead()) {
+				arrangeMove(dt);
+				arrangeEat(dt);
+			}
 			else super.setDelay(dt);
 			this.setAge(getAge() + dt);
 			time+=dt;
@@ -160,6 +163,18 @@ public class Skullcab extends Plant implements Jump{
 	@Override @Raw
 	public void jump(double deltaT){
 		super.updateVerticalComponent(super.getPosition().getY() + kinematics.getYVelocity()*deltaT);
+	}
+
+	@Override
+	protected void arrangeEat(double dt) {
+		if(getWorld() == null || getWorld().getPlayer() == null ||
+				!getRectangle().overlaps(super.getWorld().getPlayer().getRectangle())) {
+			setHitTime(0); return;
+		}
+		if(getHitTime() == 0 && getPoints() != 0) updateHitPoints(-1);
+		setHitTime(getHitTime() + dt);
+		if(getHitTime()  >= Constant.TIMEOUT.getValue()) setHitTime(0);
+		if(getPoints() == 0) terminate();
 	}
 
 }
