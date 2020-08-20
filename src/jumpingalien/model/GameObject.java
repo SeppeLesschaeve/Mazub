@@ -104,5 +104,7 @@ public abstract class GameObject {
 		this.world = world;
 	}
 	
-	protected abstract boolean isTerminated();
+	public boolean isTerminated() {
+		return world == null;
+	};
 }

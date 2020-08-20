@@ -1,6 +1,5 @@
 package jumpingalien.model;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -107,10 +106,6 @@ public abstract class Organism extends GameObject{
 		this.setWorld(null);
 	}
 
-	public boolean isTerminated() {
-		return (this.getWorld() == null && isDead());
-	}
-
 	protected Rectangle getUpBorder() {
 		Rectangle up = null;
 		if(getOrientation() == -1) {
@@ -169,7 +164,7 @@ public abstract class Organism extends GameObject{
 		if(this.getWorld() == null || this.isTerminated() || rect == null) return overlappingObjects;
 		for(Object object: this.getWorld().getGameObjects()) {
 			if(!(object instanceof Plant) || this instanceof Mazub) {
-				if(object instanceof Plant) {
+				if(object instanceof Plant && this instanceof Mazub && ((Plant) object).getRectangle().overlaps(getRectangle())) {
 					overlappingObjects.add((Plant) object);
 				}else if(rect.overlaps(((Organism) object).getRectangle()) && object != this) {
 					overlappingObjects.add((Organism) object);

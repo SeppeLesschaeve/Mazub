@@ -369,38 +369,6 @@ public class Slime extends Creature implements Run{
 		slime.setSprite(1- slime.getIndex());
 		this.setSprite(1- getIndex());
 	}
-	
-	/**
-	 * This method is used to update the situation of the slime using deltaT as passing time 
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as time
-	 * 
-	 * @throws IllegalArgumentException
-	 * 			...
-	 * 		|Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)
-	 * @post ...
-	 * 		| for(double time = 0.0, dt = super.updateDt(deltaT, time); time < deltaT; time += dt, dt = super.updateDt(deltaT, time)) 
-	 *		|	if(isDead()) then super.setDelay(getDelay() + dt)
-	 *		|	if(getDelay() >= REMOVE_DELAY) then terminate()
-	 *		|	arrangeFeatureHit(dt)
-	 *		|	arrangeObjectHit(dt)
-	 *		|	arrangeMovement(dt)
-	 *		|	setBorders()
-	 *
-	 */
-	public void advanceTime(double deltaT) throws IllegalArgumentException{
-		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
-		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
-			if(isDead()) super.setDelay(getDelay() + dt); 
-			if(getDelay() >= Constant.REMOVE_DELAY.getValue()) terminate();
-			arrangeFeatureHit(dt);
-			arrangeObjectHit(dt);
-			arrangeMovement(dt);
-			time += dt;
-		}
-	}
 
 	/**
 	 * This method arrange the movement of the slime over interval dt
@@ -413,8 +381,8 @@ public class Slime extends Creature implements Run{
 	 *		| if(!super.isInside()) then terminate()
 	 *
 	 */
-	private void arrangeMovement(double dt) {
-		if(canRun()) run(dt); else endRun();
+	protected void arrangeMovement(double dt) {
+		if(isRunning()) run(dt);
 		if(!super.isInside()) terminate();
 	}
 
@@ -439,13 +407,14 @@ public class Slime extends Creature implements Run{
 	 *		|else setWaterTime(0.0)
 	 *		|if(getWaterTime() >= Constant.SLIME_WATER_TIME.getValue()) then setWaterTime(0.0)
 	 */
-	private void arrangeFeatureHit(double dt) {
+	protected void arrangeFeatureHit(double dt) {
 		if(getPoints() == 0) return;
 		Boolean[] features =  getFeatureScore();
 		if(features[0]) {super.updateHitPoints(-getPoints()); return;}
 		if(features[1]) {
 			setGasTime(getGasTime() + dt); 
-			if(getGasTime() >= Constant.SLIME_GAS_TIME.getValue()) super.updateHitPoints((int) Constant.SLIME_GAS.getValue());
+			if(getGasTime() >= Constant.SLIME_GAS_TIME.getValue()) 
+				super.updateHitPoints((int) Constant.SLIME_GAS.getValue());
 		}else { setGasTime(0.0);}
 		if(features[2]) {
 			setWaterTime(getWaterTime() + dt); 
@@ -469,13 +438,14 @@ public class Slime extends Creature implements Run{
 	 *		|		getWorld().handleImpact(this, object, dt)
 	 *
 	 */
-	private void arrangeObjectHit(double dt) {
+	protected void arrangeObjectHit(double dt) {
 		Set<Organism> objects = getCollidingObjects();
 		if(getWorld() != null) {
 			for(Organism object: objects) {
 				int type = getGameObjectType(object);
 				switch(type) {
 				case 0: arrangeMazubHit(dt);break;
+				case 3: arrangeSwitch((Slime) object); break;
 				case 4: arrangeSharkHit(dt);break;
 				default:break;
 				}
@@ -502,8 +472,8 @@ public class Slime extends Creature implements Run{
 	public Boolean[] getFeatureScore() {
 		Boolean[] features = new Boolean[] {false, false, false};
 		if(getWorld() == null) return features;
-		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth()-1; pixelX++) {
-			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight()-1; pixelY++) {
+		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX < super.getRectangle().getXCoordinate()+super.getRectangle().getWidth(); pixelX++) {
+			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY < super.getRectangle().getYCoordinate()+super.getRectangle().getHeight(); pixelY++) {
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) features[0] = true;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.GAS)   features[1] = true;
 				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER) features[2] = true;
@@ -529,6 +499,21 @@ public class Slime extends Creature implements Run{
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 			setBlockTime(0.0);
 		}
+	}
+
+	@Override
+	protected void arrangeInitialMovement() {}
+
+	@Override
+	protected boolean canMoveInCurrentState() {
+		// TODO Auto-generated method stub
+		if(isDead() || kinematics.isStationary())  return true;
+		return (isRunning() && canRun());
+	}
+
+	@Override
+	protected void setNewState() {
+		if(isRunning()) endRun();
 	}
 	
 }

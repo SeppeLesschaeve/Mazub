@@ -314,11 +314,7 @@ public class Spider extends Organism implements Run, Jump{
 	@Override
 	public void advanceTime(double deltaT) throws IllegalArgumentException{
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		if(kinematics.getYAcceleration() == 0.0 && isAbleToJump()) {
-			kinematics.setYVelocity(JUMP_VEL); 
-			kinematics.setYAcceleration(JUMP_ACC);
-		}
-		if(kinematics.getXVelocity() == 0.0 && isAbleToRun()) kinematics.setXVelocity(-(0.15*getLegs()));
+		arrangeInitialMovement();
 		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
 		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
 			if(isDead()) super.setDelay(getDelay() + dt); 
@@ -328,6 +324,14 @@ public class Spider extends Organism implements Run, Jump{
 			arrangeMovement(dt);
 			time += dt;
 		}	
+	}
+
+	protected void arrangeInitialMovement() {
+		if(kinematics.getYAcceleration() == 0.0 && isAbleToJump()) {
+			kinematics.setYVelocity(JUMP_VEL); 
+			kinematics.setYAcceleration(JUMP_ACC);
+		}
+		if(kinematics.getXVelocity() == 0.0 && isAbleToRun()) kinematics.setXVelocity(-(0.15*getLegs()));
 	}
 
 	/**

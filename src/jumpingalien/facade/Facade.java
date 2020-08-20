@@ -305,7 +305,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public boolean isTerminatedGameObject(Object object) throws ModelException {
-		return ((Organism) object).isTerminated();
+		return ((GameObject) object).isTerminated();
 	}
 	
 	@Override

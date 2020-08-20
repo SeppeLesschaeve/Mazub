@@ -95,11 +95,11 @@ public class Skullcab extends Plant implements Jump{
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
 		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
 		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
-			if(!isDead()) {
-				arrangeMove(dt);
-				arrangeEat(dt);
+			if(!isDead()) arrangeMove(dt);
+			else {
+				super.setDelay(dt);
+				if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(dt);
 			}
-			else super.setDelay(dt);
 			this.setAge(getAge() + dt);
 			time+=dt;
 		}
@@ -125,14 +125,16 @@ public class Skullcab extends Plant implements Jump{
 		double overshoot = getTimer()-Constant.PLANT_SWITCH_TIME.getValue();
 		if(getTimer() >= Constant.PLANT_SWITCH_TIME.getValue()) {
 			jump(deltaT-overshoot);
+			if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(deltaT-overshoot);
 			endJump();
 			jump(overshoot);
+			if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(overshoot);
 		}else {
 			jump(deltaT);
+			if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(deltaT);
+			
 		}
-		if(getWorld() != null && getWorld().getPlayer() != null) {
-			getWorld().getPlayer().arrangeObjectHit(deltaT);
-		}
+		if(!super.isInside()) terminate();
 	}
 /**
 	 * This method is used to switch to movement 
@@ -165,13 +167,8 @@ public class Skullcab extends Plant implements Jump{
 		super.updateVerticalComponent(super.getPosition().getY() + kinematics.getYVelocity()*deltaT);
 	}
 
-	@Override
 	protected void arrangeEat(double dt) {
-		if(getWorld() == null || getWorld().getPlayer() == null ||
-				!getRectangle().overlaps(super.getWorld().getPlayer().getRectangle())) {
-			setHitTime(0); return;
-		}
-		if(getHitTime() == 0 && getPoints() != 0) updateHitPoints(-1);
+		if(getWorld().getPlayer().getPoints() < getWorld().getPlayer().getHitPoints().getMaximum() && getHitTime() == 0 && getPoints() != 0) updateHitPoints(-1);
 		setHitTime(getHitTime() + dt);
 		if(getHitTime()  >= Constant.TIMEOUT.getValue()) setHitTime(0);
 		if(getPoints() == 0) terminate();

@@ -232,51 +232,6 @@ public class Shark extends Creature implements Run, Jump{
 		kinematics.setXAcceleration(0.0);
 		kinematics.setXVelocity(0.0);
 	}
-
-	/**
-	 * This method is used to update the state of the shark over an interval
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as interval
-	 *
-	 * @throws IllegalArgumentException
-	 * 			...
-	 * 		| (Double.isNaN(deltaT) || deltaT < 0 || deltaT >= 0.2 || Double.isInfinite(deltaT))
-	 * @post ...
-	 * 		|if(getMoveTime() == 0 &&  getRestTime() == 0) then 
-	 *		|	super.setSprite(1) && super.getAcceleration().setY(Y_ACC) 
-	 *		|	and if(getWorld() == null || (!super.getWorld().shallBePassable(getDownBorder()) || swimsInWater())) 
-	 *		|	then super.getVelocity().setY(Y_VEL) else super.getVelocity().setY(0.0)
-	 * @post ...
-	 * 		| if(mustFall()) then super.getAcceleration().setY(Y_ACC) 
-	 *		| for(double time = 0.0, dt = super.updateDt(deltaT, time); time < deltaT; time += dt, dt = super.updateDt(deltaT, time)) 
-	 *		|	if(isDead()) then super.setDelay(getDelay() + dt) 
-	 *		|	if(getDelay() >= REMOVE_DELAY) then terminate()
-	 *		|	arrangeFeatureHit(dt)
-	 *		|	arrangeObjectHit(dt)
-	 *		|	arrangeMovement(dt)
-	 *		|	setBorders()
-	 * 
-	 */
-	@Override
-	public void advanceTime(double deltaT) throws IllegalArgumentException{
-		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT >= 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		if(getMoveTime() == 0 &&  getRestTime() == 0) {
-			super.setSprite(1); kinematics.setYAcceleration(Y_ACC);
-			if(getWorld() == null || (!super.getWorld().shallBePassable(getDownBorder()) || swimsInWater())) 
-				kinematics.setYVelocity(Y_VEL); else kinematics.setYVelocity(0.0);
-		}
-		if(mustFall()) kinematics.setYAcceleration(Y_ACC);
-		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
-		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
-			if(isDead()) super.setDelay(getDelay() + dt); 
-			if(getDelay() >= Constant.REMOVE_DELAY.getValue()) terminate();
-			arrangeFeatureHit(dt);
-			arrangeObjectHit(dt);
-			arrangeMovement(dt);
-			time += dt;
-		}
-	}
 	
 	/**
 	 * This method is used to advance the shark in the current state over interval
@@ -299,10 +254,10 @@ public class Shark extends Creature implements Run, Jump{
 	 * @post ...
 	 * 		| if(!super.isInside()) then terminate()
 	 */
-	private void arrangeMovement(double dt) {
-		if(isDead()) { return;}
-		if(isRunning()) { if(canRun()) run(dt); else endRun();}
-		if(isJumping()) { if(canJump()) jump(dt); else endJump();}
+	protected void arrangeMovement(double dt) {
+		if(isDead()) return;
+		if(isRunning()) run(dt);
+		if(isJumping()) jump(dt);
 		if(getMoveTime() < Constant.SHARK_SWITCH_TIME.getValue()) {
 			setMoveTime(getMoveTime() + dt);
 		}else {
@@ -403,7 +358,7 @@ public class Shark extends Creature implements Run, Jump{
 	 *		| else setOutWaterTime(0.0)
 	 * 
 	 */
-	private void arrangeFeatureHit(double dt) {
+	protected void arrangeFeatureHit(double dt) {
 		if(!swimsInWater()) {
 			setOutWaterTime(getOutWaterTime() + dt);
 			if(getOutWaterTime() >= Constant.SHARK_OUT_WATER_TIME.getValue()) {
@@ -427,7 +382,7 @@ public class Shark extends Creature implements Run, Jump{
 	 *		|		else getWorld().handleImpact(this, object, dt)
 	 *
 	 */
-	private void arrangeObjectHit(double dt) {
+	protected void arrangeObjectHit(double dt) {
 		Set<Organism> objects = getCollidingObjects();
 		if(getWorld() != null) {
 			for(Organism object: objects) {
@@ -523,6 +478,29 @@ public class Shark extends Creature implements Run, Jump{
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
 			setBlockTime(0.0);
 		}
+	}
+
+	@Override
+	protected void arrangeInitialMovement() {
+		if(getMoveTime() == 0 &&  getRestTime() == 0) {
+			super.setSprite(1); kinematics.setYAcceleration(Y_ACC);
+			if(getWorld() == null || (!super.getWorld().shallBePassable(getDownBorder()) || swimsInWater())) 
+				kinematics.setYVelocity(Y_VEL); else kinematics.setYVelocity(0.0);
+		}
+		if(mustFall()) kinematics.setYAcceleration(Y_ACC);
+	}
+
+	@Override
+	protected boolean canMoveInCurrentState() {
+		if(isDead() || kinematics.isStationary())  return true;
+		return (isRunning() && canRun()) || (isJumping() && canJump());
+	}
+
+	@Override
+	protected void setNewState() {
+		// TODO Auto-generated method stub
+		if(isRunning()) endRun();
+		if(isJumping()) endJump();
 	}
 	
 }

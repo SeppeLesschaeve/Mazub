@@ -1,10 +1,8 @@
 package jumpingalien.model;
 
-import java.util.Iterator;
 import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.*;
-import be.kuleuven.cs.som.taglet.*;
 import jumpingalien.util.Sprite;
 
 /**
@@ -439,7 +437,8 @@ public class Mazub extends Creature implements Run, Jump{
 	private void arrangeEndMove(double dt) {
 		setEndMoveTime(getEndMoveTime() + dt);
 		if(getEndMoveTime() >= Constant.MAZUB_END_MOVE_TIME.getValue()) {
-			if(super.canStopRun()) {
+			Rectangle endRun = new Rectangle(getRectangle().getOrigin(), getSprites()[0].getWidth(), getSprites()[0].getHeight());
+			if(getWorld() == null || (super.getWorld().shallBePassable(endRun) && overlappingGameObject(endRun).isEmpty())) {
 				super.setSprite(0);
 				setEndMoveTime(0.0);
 			}
@@ -471,19 +470,7 @@ public class Mazub extends Creature implements Run, Jump{
 
 	public void advanceTime(double deltaT) throws IllegalArgumentException{
 		Position<Integer> position = new Position<>(getRectangle().getXCoordinate(), getRectangle().getYCoordinate());
-		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT >= 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		if(!isJumping()) arrangeFallNotJumping();
-		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
-		if(kinematics.isStationary()) dt=deltaT;
-		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
-			if(isDead()) super.setDelay(getDelay() + dt); 
-			if(getDelay() >= Constant.REMOVE_DELAY.getValue()) terminate();
-			arrangeFeatureHit(dt);
-			arrangeObjectHit(dt);
-			if(!canMoveInCurrentState()) setNewState();
-			arrangeMovement(dt);
-			time += dt;
-		}
+		super.advanceTime(deltaT);
 		if(getWorld() != null) super.getWorld().updateWindow(position);
 		arrangeObjectHit(0.0); 
 	}
@@ -498,7 +485,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 *		| if((isJumping() && !canJump()) || (isFalling() && !canFall())) then endJump(0.0)
 	 *
 	 */
-	private void setNewState() {
+	protected void setNewState() {
 		if(kinematics.getXAcceleration() == 0.0 && kinematics.getYAcceleration() == 0.0) return;
 		if(isRunning() && ((getOrientation() == -1 && !canRunLeft())||(getOrientation() == 1 && !canRunRight()))) endRun();
 		if((isJumping() && !canJump()) || (isFalling() && !canFall())) endJump();
@@ -553,7 +540,6 @@ public class Mazub extends Creature implements Run, Jump{
 	 *		|result ==  isEmpty(super.overlappingGameObject(getDownBorder())) && super.getWorld().shallBePassable(getDown())
 	 * 
 	 */
-	@Override
 	public boolean canFall() {
 		if(getWorld() == null) return true;
 		return isEmpty(super.overlappingGameObject(getDownBorder())) && super.getWorld().shallBePassable(getDownBorder());
@@ -569,7 +555,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 *		|if(isJumping()) then result == canJump()
 	 *		|if(isFalling()) result == canFall()
 	 */
-	private boolean canMoveInCurrentState() {
+	protected boolean canMoveInCurrentState() {
 		if(isRunning() && getOrientation() == -1) return canRunLeft();
 		if(isRunning() && getOrientation() == 1) return canRunRight();
 		if(isJumping()) return canJump();
@@ -592,16 +578,12 @@ public class Mazub extends Creature implements Run, Jump{
 	 */
 	protected void arrangeObjectHit(double dt) {
 		Set<Organism> objects = getCollidingObjects();
-		if(objects.isEmpty()) setEatTime(0.0);
 		if(getWorld() != null) {
-			Iterator<Organism> iterator = objects.iterator();
-			while(iterator.hasNext()) {
-				Organism object = iterator.next();
-				boolean alive = !object.isDead();
+			for(Organism object : objects){
 				int type = getGameObjectType(object);
 				switch(type) {
-				case 1:arrangeSneezeHit(alive, dt); iterator.remove(); break;
-				case 2:arrangeSkullHit(alive, dt); break;
+				case 1:arrangeSneezeHit((Sneezewort) object, dt); break;
+				case 2:arrangeSkullHit((Skullcab) object, dt); break;
 				case 3:arrangeSlimeHit(dt); break;
 				case 4:arrangeSharkHit(dt); break;
 				case 5:arrangeSpiderHit(dt); break;
@@ -627,7 +609,7 @@ public class Mazub extends Creature implements Run, Jump{
 	 *		|if(isRunning() && !isDucking() && kinematics.getVerticalVelocity() <= 0) then arrangeSpriteChange(dt)
 	 *		
 	 */
-	private void arrangeMovement(double dt) {
+	protected void arrangeMovement(double dt) {
 		if( isDead() ) return;
 		if(isMovingVertically()) jump(dt);
 		if(isRunning()) run(dt);
@@ -800,20 +782,21 @@ public class Mazub extends Creature implements Run, Jump{
 		if(getBlockTime() >= Constant.TIMEOUT.getValue()) setBlockTime(0.0);
 	}
 	
-	public void arrangeSneezeHit(Boolean alive, double dt) {
-		if(getPoints() < getHitPoints().getMaximum()) { 
-			if(alive) updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
-			else updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
+	public void arrangeSneezeHit(Sneezewort sneezewort, double dt) {
+		if(getPoints() < getHitPoints().getMaximum() ) { 
+			if(sneezewort.isDead()) updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
+			else updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
+			sneezewort.terminate();
 		}
 	}
 	
-	public void arrangeSkullHit(Boolean alive, double dt) {
-		setEatTime(getEatTime() + dt);
-		if( getEatTime() >= Constant.TIMEOUT.getValue() && getPoints() < getHitPoints().getMaximum() ) {
-			if(alive) updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
-			else updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue()); 
+	public void arrangeSkullHit(Skullcab skullcab, double dt) {
+		if(skullcab.getHitTime() == 0 && skullcab.getPoints() != 0 && getPoints() < getHitPoints().getMaximum()) {
+			if(skullcab.isDead()) updateHitPoints((int) Constant.MAZUB_DEAD_PLANT.getValue());
+			else updateHitPoints((int) Constant.MAZUB_LIVING_PLANT.getValue());
 		}
-		if(getEatTime()  >= Constant.TIMEOUT.getValue()) setEatTime(0);
+		skullcab.arrangeEat(dt);
+		
 	}
 	
 	public void arrangeSharkHit(double dt) {
@@ -870,6 +853,11 @@ public class Mazub extends Creature implements Run, Jump{
 		featureTime += time; 
 		if(featureTime >= Constant.MAZUB_FEATURE_TIME.getValue()) 
 			updateHitPoints((int) Constant.MAZUB_WATER.getValue());
+	}
+
+	@Override
+	protected void arrangeInitialMovement() {
+		if(!isJumping()) arrangeFallNotJumping();
 	}
 
 

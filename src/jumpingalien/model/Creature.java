@@ -39,31 +39,36 @@ public abstract class Creature extends Organism {
 		return getPoints() == 0;
 	}
 	
-	protected boolean canStopRun() {
-		Rectangle endRun = new Rectangle(getRectangle().getOrigin(), getSprites()[0].getWidth(), getSprites()[0].getHeight());
-		if(getWorld() != null) {
-			return super.getWorld().shallBePassable(endRun) && overlappingGameObject(endRun).isEmpty();
-		}
-		return true;
-	}
-	
-	protected boolean canFall() {
-		Rectangle down = super.getDownBorder();
-		if(getWorld() == null) return false;
-		for(int x = down.getXCoordinate(); x < down.getXCoordinate() + down.getWidth(); x++)
-			if(!getWorld().getTileFeature(x, down.getYCoordinate()).isPassable()) return false;
-		return(overlappingGameObject(down).isEmpty());
-	}
-
 	protected boolean canRun() {
 		if(getWorld()  == null) return true;
 		if(getOrientation() == -1)
 			return overlappingGameObject(getLeftBorder()).isEmpty() && super.getWorld().shallBePassable(getLeftBorder());
 		else if(getOrientation() == 1)
 			return overlappingGameObject(getRightBorder()).isEmpty() && super.getWorld().shallBePassable(getRightBorder());
-		return false;
+		return true;
 	}
 	
+	public void advanceTime(double deltaT) {
+		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT >= 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
+		arrangeInitialMovement();
+		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
+		for(double time = 0.0; time < deltaT; time +=dt, dt  = kinematics.calculateNewTimeSlice(deltaT, time)) {
+			if(isDead()) super.setDelay(getDelay() + dt); 
+			if(getDelay() >= Constant.REMOVE_DELAY.getValue()) terminate();
+			arrangeFeatureHit(dt);
+			arrangeObjectHit(dt);
+			if(!canMoveInCurrentState()) setNewState();
+			arrangeMovement(dt);
+		}
+	}
+	
+	protected abstract void arrangeMovement(double dt);
+	protected abstract void arrangeObjectHit(double dt);
+	protected abstract void arrangeFeatureHit(double dt);
+	protected abstract void arrangeInitialMovement();
+	protected abstract void setNewState();	
+
 	protected abstract boolean canJump();
+	protected abstract boolean canMoveInCurrentState();
 
 }

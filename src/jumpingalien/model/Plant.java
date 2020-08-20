@@ -136,5 +136,4 @@ public abstract class Plant extends Organism{
 	
 	protected abstract void arrangeMove(double deltaT); //specification can be seen in the subclasses of this class
 	protected abstract void startMove(); //specification can be seen in the subclasses of this class
-	protected abstract void arrangeEat(double deltaT);
 }
