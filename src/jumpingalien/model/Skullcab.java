@@ -1,6 +1,5 @@
 package jumpingalien.model;
 
-import be.kuleuven.cs.som.annotate.*;
 import jumpingalien.util.Sprite;
 
 /**
@@ -13,9 +12,7 @@ import jumpingalien.util.Sprite;
  * @author Seppe Lesschaeve (Informatica)
  *
  */
-public class Skullcab extends Plant implements Jump{
-	
-	private static final double Y_VELOCITY = 0.5;
+public class Skullcab extends Plant implements OnlyVerticalMovable{
 	
 	/**
 	 * This constructor will set the initial Pixel Position, Actual Position, HitPoint and the images to show the animation
@@ -36,74 +33,21 @@ public class Skullcab extends Plant implements Jump{
 	 * 		| startMove()
 	 * 
 	 */
-	public Skullcab(int xPixelLeft, int yBottomLeft, Sprite... sprites) throws IllegalArgumentException{
+	public Skullcab(int xPixelLeft, int yBottomLeft, Sprite... sprites){
 		super(xPixelLeft, yBottomLeft, 3, sprites);
 		if(sprites.length != 2) throw new IllegalArgumentException("You must have exactly two images");
-		startMove();
+		kinematics.setYVelocity(0.5);
 	}
 	
-	/**
-	 * This method returns the orientation of the Skullcab using the sprite and velocity
-	 * 
-	 * @return ....
-	 * 		| if(super.getVelocity().getX() < 0) then result == Orientation.NEGATIVE.getValue()
-	 *		| if(super.getVelocity().getX() > 0) then result == Orientation.POSITIVE.getValue()
-	 */
-	@Basic
-	public int getOrientation() {
-		if(kinematics.getYVelocity() < 0) return -1;
-		else if(kinematics.getYVelocity() > 0) return 1;
-		else return 0;
-	}
-	
-	/**
-	 * This method will set the velocity to start moving
-	 * 
-	 * @post ...
-	 * 		|super.getVelocity().setX(0.0)
-	 *		|super.getVelocity().setY(Y_VELOCITY)
-	 */
 	@Override
-	protected void startMove() {
-		kinematics.setYVelocity(Y_VELOCITY);
+	public boolean isDead() {
+		return super.getAge() >= 12 || super.getPoints() == 0;
 	}
-	
-	/**
-	 * This method will update the situation of the Skullcab using deltaT
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as time to be passed
-	 * @throws IllegalArgumentException
-	 * 			...
-	 * 		|Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)
-	 * @post ...
-	 * 		|	for(double time = 0.0, dt = updateDt(deltaT, time); time < deltaT; time += dt, dt = updateDt(deltaT, time)) 
-	 *		|		this.setAge(getAge() + dt)
-	 *		|		if(getAge() < SKULL_AGE && getTimer() + dt > Constant.PLANT_SWITCH_TIME.getValue() && !isDead())  
-	 *		|			then arrangeOvershoot(Constant.PLANT_SWITCH_TIME.getValue() - getTimer(), dt)
-	 *		|		else if(getAge() < SKULL_AGE && !isDead())  then arrangeMove(dt)
-	 *		|	else 
-	 *		|		if(getWorld() != null && getWorld().getPlayer() != null) then 
-	 *		|			getWorld().handleImpact(getWorld().getPlayer(), this, deltaT)
-	 *		|		super.setDelay(dt)
-	 *@post ...
-	 *		| if(super.getDelay() >= REMOVE_DELAY || !isInside()) then terminate()
-	 * 
-	 */
+
 	@Override
-	public void advanceTime(double deltaT) throws IllegalArgumentException{
-		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
-		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
-			if(!isDead()) arrangeMove(dt);
-			else {
-				super.setDelay(dt);
-				if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(dt);
-			}
-			this.setAge(getAge() + dt);
-			time+=dt;
-		}
-		if(super.getDelay() >= Constant.REMOVE_DELAY.getValue() || !isInside()) terminate();
+	protected void arrangeEat(double dt) {
+		super.updateHitPoints(-1);
+		if(isDead()) terminate();
 	}
 	
 	/**
@@ -121,57 +65,73 @@ public class Skullcab extends Plant implements Jump{
 	 */
 	@Override
 	protected void arrangeMove(double deltaT){
-		setTimer(getTimer() + deltaT);
-		double overshoot = getTimer()-Constant.PLANT_SWITCH_TIME.getValue();
-		if(getTimer() >= Constant.PLANT_SWITCH_TIME.getValue()) {
-			jump(deltaT-overshoot);
-			if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(deltaT-overshoot);
-			endJump();
-			jump(overshoot);
-			if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(overshoot);
-		}else {
-			jump(deltaT);
-			if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(deltaT);
-			
-		}
+		if(getMoveTime() >= Constant.PLANT_SWITCH_TIME.getValue()) {
+			if(isGoingUp()) startFall();
+			else if(isGoingDown()) startJump();
+		}else jump(deltaT);
 		if(!super.isInside()) terminate();
 	}
-/**
-	 * This method is used to switch to movement 
-	 * 
-	 * @param deltaT
-	 * 			This parameter is unused but must be implemented of the interface Jump
-	 * 
-	 * @post ...
-	 * 		| setTimer(0.0) && super.getVelocity().setY(-super.kinematics.getVerticalVelocity()) && super.setSprite(1-super.getIndex())
-	 */
-	@Raw
-	public void endJump(){
-		setTimer(getTimer()-Constant.PLANT_SWITCH_TIME.getValue()); 
-		kinematics.setYVelocity(-kinematics.getYVelocity()); 
-		super.setSprite(1-super.getIndex());
+
+	@Override
+	public boolean canStartJump() {
+		return !isDead();
 	}
+
+	@Override
+	public boolean canJump() {
+		return !isDead();
+	}
+
+	@Override
+	public boolean isGoingUp() {
+		return kinematics.getYVelocity() > 0;
+	}
+
+	@Override
+	public boolean canStartFall() {
+		return !isDead();
+	}
+
+	@Override
+	public boolean canFall() {
+		return !isDead();
+	}
+
+	@Override
+	public boolean isGoingDown() {
+		return kinematics.getYVelocity() < 0;
+	}
+
+	@Override
+	public void startJump() {
+		kinematics.setYVelocity(0.5);
+		super.setSprite(0);
+		super.setMoveTime(0);
+	}
+
+	@Override
+	public void endGoingUp() {
+		kinematics.setYVelocity(0.0);
+	}
+
+	@Override
+	public void startFall() {
+		kinematics.setYVelocity(-0.5);
+		super.setSprite(1);
+		super.setMoveTime(0);
+	}
+
+	@Override
+	public void endGoingDown() {
+		kinematics.setYVelocity(0.0);
+	}
+
+	@Override
+	public void jump(double deltaT) {
+		super.setMoveTime(getMoveTime()+deltaT);
+		super.updateVerticalComponent(this.getPosition().getY() + (kinematics.getYVelocity()*deltaT) + (kinematics.getYAcceleration()*deltaT*deltaT/2));
+		kinematics.updateYVelocity(deltaT);
+	}
+
 	
-	/**
-	 * This method is used to arrange the Position using deltaT
-	 * 
-	 * @param deltaT
-	 * 		This parameter is used as time
-	 * 
-	 * @post ...
-	 * 		| super.getPosition().setY(super.getPosition().getY() + super.kinematics.getVerticalVelocity()*deltaT)
-	 *		| super.getOrigin().setY((int)(super.getPosition().getY()/0.01)))
-	 */
-	@Override @Raw
-	public void jump(double deltaT){
-		super.updateVerticalComponent(super.getPosition().getY() + kinematics.getYVelocity()*deltaT);
-	}
-
-	protected void arrangeEat(double dt) {
-		if(getWorld().getPlayer().getPoints() < getWorld().getPlayer().getHitPoints().getMaximum() && getHitTime() == 0 && getPoints() != 0) updateHitPoints(-1);
-		setHitTime(getHitTime() + dt);
-		if(getHitTime()  >= Constant.TIMEOUT.getValue()) setHitTime(0);
-		if(getPoints() == 0) terminate();
-	}
-
 }

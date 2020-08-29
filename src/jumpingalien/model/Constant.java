@@ -45,7 +45,7 @@ public class Constant {
 	@Override
 	public boolean equals(Object other) {
 		if(!(other instanceof Constant)) return false;
-		else return this.getValue() == ((Constant) other).getValue();
+		else return this.value == ((Constant) other).getValue();
 	}
 	
 	@Override 

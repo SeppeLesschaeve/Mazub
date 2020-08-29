@@ -5,7 +5,7 @@ import java.util.Arrays;
 import be.kuleuven.cs.som.annotate.Basic;
 import jumpingalien.util.Sprite;
 
-public abstract class GameObject {
+public abstract class GameObject implements Comparable<GameObject>{
 	
 	private Rectangle rectangle;
 	private Position<Double> position;
@@ -28,7 +28,7 @@ public abstract class GameObject {
 	}
 	
 	public boolean canHaveAsWorld(World world) {
-		if(world != null) return getWorld() == world;
+		if(world != null) return this.world == world;
 		return !isTerminated();
 	}
 
@@ -81,7 +81,7 @@ public abstract class GameObject {
 	}
 
 	public int getIndex() {
-		return Arrays.asList(getSprites()).indexOf(getSprite());
+		return Arrays.asList(animationImages).indexOf(image);
 	}
 
 	@Basic
@@ -93,7 +93,10 @@ public abstract class GameObject {
 		this.image = sprite;
 	}
 	
-	protected abstract void setSprite(int index);
+	protected void setSprite(int index) {
+		setSprite(getSprites()[index]);
+		updateDimension(getSprite().getWidth(),getSprite().getHeight());
+	}
 
 	@Basic
 	public World getWorld() {
@@ -101,10 +104,41 @@ public abstract class GameObject {
 	}
 
 	public void setWorld(World world) {
+		if(this.world != null && !this.world.equals(world))
+			throw new IllegalArgumentException("Already placed in another World");
 		this.world = world;
 	}
 	
+	public void clearWorld() {
+		if(world == null) throw new IllegalStateException();
+		this.world = null;
+	}
+	
 	public boolean isTerminated() {
-		return world == null;
-	};
+		return world == null && isDead();
+	}
+	
+	public boolean isStillNotInAGameWorld() {
+		return world == null && !isDead();
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		return other instanceof GameObject && this.hashCode() == other.hashCode();
+	}
+	
+	@Override
+	public int hashCode() {
+		return position.hashCode();
+	}
+	
+	@Override
+	public int compareTo(GameObject other) {
+		if(this.equals(other)) return 0;
+		else if(this instanceof Mazub && !(other instanceof Mazub)) return -1;
+		else return 1;
+	}
+
+	protected abstract boolean isDead();
+	public abstract void advanceTime(double deltaT);
 }

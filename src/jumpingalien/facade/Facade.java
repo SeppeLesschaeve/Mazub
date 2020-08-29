@@ -56,7 +56,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public int[] getPixelPosition(Mazub alien) throws ModelException {
-		return new int[] {alien.getRectangle().getXCoordinate(), alien.getRectangle().getYCoordinate()};
+		return new int[] {alien.getRectangle().getX(), alien.getRectangle().getY()};
 	}
 	
 	@Override
@@ -76,7 +76,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public boolean isMoving(Mazub alien) throws ModelException {
-		return alien.isRunning();
+		return alien.isMoving();
 	}
 	
 	@Override
@@ -108,7 +108,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public boolean isJumping(Mazub alien) throws ModelException {
-		return alien.isMovingVertically();
+		return alien.isJumping();
 	}
 	
 	@Override
@@ -259,7 +259,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public void setTargetTileCoordinate(World world, int[] tileCoordinate) throws ModelException {
-		world.setTargetTile(world.getTileLength(), tileCoordinate);
+		world.setTargetTile(tileCoordinate);
 	}
 	
 	@Override
@@ -325,7 +325,7 @@ public class Facade implements IFacade {
 	
 	@Override
 	public int[] getPixelPosition(Object object) throws ModelException {
-		return new int[] {((Organism)object).getRectangle().getXCoordinate(), ((Organism)object).getRectangle().getYCoordinate()};
+		return new int[] {((Organism)object).getRectangle().getX(), ((Organism)object).getRectangle().getY()};
 	}
 	
 	@Override

@@ -1,6 +1,5 @@
 package jumpingalien.model;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.Basic;
@@ -18,14 +17,13 @@ import jumpingalien.util.Sprite;
  * @author Seppe Lesschaeve (Informatica)
  * 
  */
-public class Slime extends Creature implements Run{
+public class Slime extends Creature implements OnlyHorizontalMovable{
 	
 	private School school;
+	private long id;
 	private double gasTime = 0.0;
 	private double waterTime = 0.0;
-	private long id;
-	private static final double X_ACC = 0.7;
-	private static final double X_MAX_VELOCITY = 2.5;
+	private double mazubTime = 0.0;
 	
 	/**
 	 * This constructor will set the initial Pixel Position, Actual Position, HitPoints and the images to show the animation
@@ -53,16 +51,16 @@ public class Slime extends Creature implements Run{
 	 * @post ...
 	 * 		|	if(school != null) then school.addSlime(this)
 	 * @post ...
-	 * 		| super.getAcceleration().setX(X_ACC) && super.getAcceleration().setY(0.0) && 
+	 * 		| super.getAcceleration().setX(0.7) && super.getAcceleration().setY(0.0) && 
 	 * 		| super.getVelocity().setMinX(0.0) && super.getVelocity().setMaxX(X_MAX_VELOCITY)
 	 * 
 	 */
-	public Slime(Set<Long> ids, int pixelLeftX, int pixelBottomY, long id, School school, Sprite... sprites) throws IllegalArgumentException{
+	public Slime(Set<Long> ids, int pixelLeftX, int pixelBottomY, long id, School school, Sprite... sprites){
 		super(pixelLeftX, pixelBottomY, 100, 0, Integer.MAX_VALUE, sprites);
 		if(sprites.length != 2 || id < 0 || ids.contains(id)) throw new IllegalArgumentException("You must have exactly two images");
 		this.setId(id);
-		kinematics.setXAcceleration(X_ACC);
-		kinematics.setMaxXVelocity(X_MAX_VELOCITY);
+		kinematics.setXAcceleration(0.7);
+		kinematics.setMaxXVelocity(2.5);
 		if(school != null) {
 			school.addSlime(this);
 		}
@@ -92,6 +90,16 @@ public class Slime extends Creature implements Run{
 	 */
 	private void setId(long id) {
 		this.id = id;
+	}
+	
+	/**
+	 * This method is used to clear the id
+	 * 
+	 * @effect ...
+	 * 		| this.setId(0L)
+	 */
+	public void clearId() {
+		this.setId(0L);
 	}
 
 	/**
@@ -141,18 +149,17 @@ public class Slime extends Creature implements Run{
 	private void setWaterTime(double waterTime) {
 		this.waterTime = waterTime;
 	}
-
-	/**
-	 * This method will return if the slime can jump
-	 * 
-	 * @return ...
-	 * 		|result == false
-	 */
-	@Override
-	protected boolean canJump() {
-		return false;
-	}
 	
+
+	public double getMazubTime() {
+		return mazubTime;
+	}
+
+	public void setMazubTime(double mazubTime) {
+		this.mazubTime = mazubTime;
+		if(this.mazubTime >= Constant.TIMEOUT.getValue()) this.mazubTime = 0.0;
+	}
+
 	/**
 	 * This method returns whether a school can be used or not
 	 * 
@@ -203,7 +210,7 @@ public class Slime extends Creature implements Run{
 	 * 		|(new this).school = school
 	 * 
 	 */
-	public void setSchool(School school)  throws IllegalArgumentException{
+	public void setSchool(School school){
 		if(!canHaveAsSchool(school)) throw new IllegalArgumentException();
 		this.school = school;
 	}
@@ -243,147 +250,78 @@ public class Slime extends Creature implements Run{
 	 *
 	 */
 	@Raw
-	public void setNewSchool(School school) throws IllegalArgumentException{
+	public void setNewSchool(School school) {
 		if(!canHaveAsNewSchool(school)) throw new IllegalArgumentException("You can not use this school as new school for this slime");
-		for(Slime oldSchoolSlime: this.getSchool().getSlimes()) {
-			if(oldSchoolSlime != this) {
-				this.updateHitPoints(-1);
-				oldSchoolSlime.updateHitPoints(1);
+		Transferrator transferrator = new Transferrator() {
+			
+			@Override
+			public void transfer(School nextSchool) {
+				for(Slime oldSchoolSlime: Slime.this.getSchool().getSlimes()) {
+					if(oldSchoolSlime != Slime.this) {
+						Slime.this.updateHitPoints(-1);
+						oldSchoolSlime.updateHitPoints(1);
+					}
+				}
+				Slime.this.getSchool().removeSlime(Slime.this);
+				nextSchool.addSlime(Slime.this);
+				Slime.this.setSchool(nextSchool);
+				for(Slime newSchoolSlime: Slime.this.getSchool().getSlimes()) {
+					if(newSchoolSlime != Slime.this) {
+					newSchoolSlime.updateHitPoints(-1);
+					Slime.this.updateHitPoints(1);
+					}
+				}
 			}
-		}
-		if(getWorld() != null) {
-			getWorld().transfer(this, this.getSchool(), school);
-		}
-		for(Slime newSchoolSlime: this.getSchool().getSlimes()) {
-			if(newSchoolSlime != this) {
-				newSchoolSlime.updateHitPoints(-1);
-				this.updateHitPoints(1);
-			}
-		}
-	}
-	
-	/**
-	 * This method is used to clear the id
-	 * 
-	 * @effect ...
-	 * 		| this.setId(0L)
-	 */
-	public void clearId() {
-		this.setId(0L);
-	}
-	
-	/**
-	 * This method is used to synchronize the school
-	 * 
-	 * @post...
-	 * 		| if(getSchool() == null) then return
-	 *		| getSchool().getSlimes().stream().filter(slime -> slime != this).forEach(slime -> slime.setHit(-1))
-	 *
-	 */
-	protected void synchronizeSchool() {
-		if(getSchool() == null) return;
-		getSchool().getSlimes().stream().filter(slime -> slime != this).forEach(slime -> slime.updateHitPoints(-1));
+		};
+		transferrator.transfer(school);
 	}
 
-	/**
-	 * This method is used to arrange the horizontal movement using deltaT as time
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as time
-	 * 
-	 * @post...
-	 * 		| super.updateX(deltaT) && super.getVelocity().accelerateX(getAcceleration(), deltaT)
-	 * 
-	 */
-	@Override @Raw
-	public void run(double deltaT) {
-		super.updateX(deltaT); kinematics.updateXVelocity(deltaT);
+	@Override
+	protected boolean canMoveInCurrentState() {
+		if(isRunningLeft()) return canRunLeft();
+		if(isRunningRight()) return canRunRight();
+		return false;
+	}
+	
+	@Override
+	protected void setNewState() {
+		if(isMoving()) endRun();
 	}
 	
 	/**
-	 * This method will set to time elements to end the movement
+	 * This method returns the indication of the features where the slime is located
 	 * 
-	 * @param deltaT
-	 * 			This parameter is unused but must be implemented of interface Run
-	 * 
-	 * @post ...
-	 * 		|  if(getOrientation() == Orientation.NEGATIVE.getValue() && !super.getWorld().shallBePassable(super.getLeftBorder())||
-	 *		|		getOrientation() == Orientation.POSITIVE.getValue() && !super.getWorld().shallBePassable(super.getRightBorder()))
-	 *		| then super.getAcceleration().setX(0.0); super.getVelocity().setX(0.0)
-	 *@post ...
-	 *		| Set<GameObject> objects = new HashSet<>()
-	 *		| if(getOrientation() == Orientation.NEGATIVE.getValue()) then objects = super.overlappingGameObject(super.getLeftBorder())
-	 *		| if(getOrientation() == Orientation.POSITIVE.getValue()) then objects = super.overlappingGameObject(super.getRightBorder())
-	 *		| for(GameObject object: objects) 
-	 *		|	if(object instanceof Slime && object != this) then arrangeSwitch((Slime)object) && break
-	 */
-	public void endRun() {
-		if((getOrientation() == -1 && !super.getWorld().shallBePassable(super.getLeftBorder()))||
-				(getOrientation() == 1 && !super.getWorld().shallBePassable(super.getRightBorder()))) {
-			kinematics.setXAcceleration(0.0);
-			kinematics.setXVelocity(0.0);
-		} 
-		Set<Organism> objects = new HashSet<>();
-		if(getOrientation() == -1) objects = super.overlappingGameObject(super.getLeftBorder());
-		if(getOrientation() == 1) objects = super.overlappingGameObject(super.getRightBorder());
-		for(Organism object: objects) {
-			if(object instanceof Slime && object != this) {
-				arrangeSwitch((Slime)object); break;
-			}else {
-				kinematics.setXVelocity(0.0);
-			}
-		}
-	}
-	
-	/**
-	 * This method is used to arrange the school switch of a slime
-	 * 
-	 * @param slime
-	 * 			This parameter is used as slime
-	 * 
-	 * @post ...
-	 *		|if(slime.getSchool().getSchool().size() < this.getSchool().getSchool().size()) then
-	 *		|	setNewSchool(slime, this.getSchool())
-	 *		|else if( this.getSchool().getSchool().size() < slime.getSchool().getSchool().size()) then 
-	 *		|	setNewSchool(this, slime.getSchool())
-	 *@post ... 
-	 *		|slime.getAcceleration().setX(-slime.kinematics.getHorizontalAcceleration())
-	 *		|this.getAcceleration().setX(-kinematics.getHorizontalAcceleration())
-	 *		|slime.getVelocity().setX(0.0)
-	 *		|this.getVelocity().setX(0.0)
-	 *		|setSprite(1- getIndex())
-	 *		|slime.setSprite(1- slime.getIndex())
-	 */
-	private void arrangeSwitch(Slime slime) {
-		slime.kinematics.setXAcceleration(-slime.kinematics.getXAcceleration());
-		this.kinematics.setXAcceleration(-kinematics.getXAcceleration());
-		slime.kinematics.setXVelocity(0.0); 
-		this.kinematics.setXVelocity(0.0);
-		if(slime.getSchool() != null) {
-			if(slime.getSchool().getSlimes().size() < getSchool().getSlimes().size()) {
-				slime.setNewSchool(this.getSchool());
-			}else if(getSchool().getSlimes().size() < slime.getSchool().getSlimes().size()) {
-				setNewSchool(slime.getSchool());
-			}
-		}
-		slime.setSprite(1- slime.getIndex());
-		this.setSprite(1- getIndex());
-	}
-
-	/**
-	 * This method arrange the movement of the slime over interval dt
-	 * 
-	 * @param dt
-	 * 			This parameter is used as interval
-	 * 
-	 * @post ...
-	 * 		| if(canRun()) then run(dt) else endRun(dt)
-	 *		| if(!super.isInside()) then terminate()
+	 * @return ...
+	 * 		|Boolean[] features = new Boolean[] {false, false, false}
+	 *		|if(getWorld() == null) return features
+	 *		...
+	 *		|for(int pixelX = super.getOrigin().getX(); pixelX < super.getOrigin().getX()+super.getRectangle().getDimension().getWidth(); pixelX++)
+	 *		|	for(int pixelY= super.getOrigin().getY(); pixelY < super.getOrigin().getY()+super.getRectangle().getDimension().getHeight(); pixelY++)
+	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA)  features[0] = true
+	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.GAS)  features[1] = true
+	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER)  features[2] = true
+	 *		|return features
 	 *
 	 */
-	protected void arrangeMovement(double dt) {
-		if(isRunning()) run(dt);
-		if(!super.isInside()) terminate();
+	@Basic
+	public Boolean[] getFeatureScore() {
+		Boolean[] features = new Boolean[] {false, false, false};
+		if(getWorld() == null) return features;
+		int tileLength = super.getWorld().getTileLength();
+		int newX =0;
+		int newY = 0;
+		for(int pixelX = super.getRectangle().getX(); pixelX < super.getRectangle().getX()+super.getRectangle().getWidth()-1; pixelX+=newX) {
+			for(int pixelY= super.getRectangle().getY(); pixelY < super.getRectangle().getY()+super.getRectangle().getHeight()-1; pixelY+=newY) {
+				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) features[0] = true;
+				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.GAS)   features[1] = true;
+				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER) features[2] = true;
+				newY = Math.min(tileLength, super.getRectangle().getY() + super.getRectangle().getHeight()-1 - pixelY);
+				if(newY < tileLength) newY=1;
+			}
+			newX = Math.min(tileLength, super.getRectangle().getX() + super.getRectangle().getWidth()-1 - pixelX);
+			if(newX < tileLength) newX=1;
+		}
+		return features;
 	}
 
 	/**
@@ -410,13 +348,13 @@ public class Slime extends Creature implements Run{
 	protected void arrangeFeatureHit(double dt) {
 		if(getPoints() == 0) return;
 		Boolean[] features =  getFeatureScore();
-		if(features[0]) {super.updateHitPoints(-getPoints()); return;}
-		if(features[1]) {
+		if(Boolean.TRUE.equals(features[0])) {super.updateHitPoints(-getPoints()); synchronizeSchool();}
+		if(Boolean.TRUE.equals(features[1])) {
 			setGasTime(getGasTime() + dt); 
 			if(getGasTime() >= Constant.SLIME_GAS_TIME.getValue()) 
 				super.updateHitPoints((int) Constant.SLIME_GAS.getValue());
 		}else { setGasTime(0.0);}
-		if(features[2]) {
+		if(Boolean.TRUE.equals(features[2])) {
 			setWaterTime(getWaterTime() + dt); 
 				if(getWaterTime() >= Constant.SLIME_WATER_TIME.getValue()) { 
 					super.updateHitPoints((int) Constant.SLIME_WATER.getValue()); synchronizeSchool();}
@@ -439,81 +377,168 @@ public class Slime extends Creature implements Run{
 	 *
 	 */
 	protected void arrangeObjectHit(double dt) {
-		Set<Organism> objects = getCollidingObjects();
+		Set<Organism> objects = getCollidingCreatures();
+		if(mazubTime != 0) setMazubTime(mazubTime + dt);
 		if(getWorld() != null) {
 			for(Organism object: objects) {
 				int type = getGameObjectType(object);
 				switch(type) {
 				case 0: arrangeMazubHit(dt);break;
 				case 3: arrangeSwitch((Slime) object); break;
-				case 4: arrangeSharkHit(dt);break;
+				case 4: arrangeSharkHit();break;
 				default:break;
 				}
 			}
 		}
 	}
-
-	/**
-	 * This method returns the indication of the features where the slime is located
-	 * 
-	 * @return ...
-	 * 		|Boolean[] features = new Boolean[] {false, false, false}
-	 *		|if(getWorld() == null) return features
-	 *		...
-	 *		|for(int pixelX = super.getOrigin().getX(); pixelX < super.getOrigin().getX()+super.getRectangle().getDimension().getWidth(); pixelX++)
-	 *		|	for(int pixelY= super.getOrigin().getY(); pixelY < super.getOrigin().getY()+super.getRectangle().getDimension().getHeight(); pixelY++)
-	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA)  features[0] = true
-	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.GAS)  features[1] = true
-	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER)  features[2] = true
-	 *		|return features
-	 *
-	 */
-	@Basic
-	public Boolean[] getFeatureScore() {
-		Boolean[] features = new Boolean[] {false, false, false};
-		if(getWorld() == null) return features;
-		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX < super.getRectangle().getXCoordinate()+super.getRectangle().getWidth(); pixelX++) {
-			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY < super.getRectangle().getYCoordinate()+super.getRectangle().getHeight(); pixelY++) {
-				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) features[0] = true;
-				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.GAS)   features[1] = true;
-				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER) features[2] = true;
-			}
-		}
-		return features;
-	}
 	
 	public void arrangeMazubHit(double dt) {
-		if(getBlockTime() == 0) {
-			updateHitPoints((int) Constant.SLIME_MAZUB.getValue());
+		if(mazubTime == 0) {
+			updateHitPoints((int) Constant.SHARK_MAZUB.getValue());
+			setMazubTime(mazubTime + dt);
 			synchronizeSchool();
 		}
-		setBlockTime(getBlockTime() + dt);
-		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
-			setBlockTime(0.0);
+	}
+
+	public void arrangeSharkHit() {
+		updateHitPoints(-getPoints());
+		synchronizeSchool();
+	}
+
+	/**
+	 * This method is used to arrange the school switch of a slime
+	 * 
+	 * @param slime
+	 * 			This parameter is used as slime
+	 * 
+	 * @post ...
+	 *		|if(slime.getSchool().getSchool().size() < this.getSchool().getSchool().size()) then
+	 *		|	setNewSchool(slime, this.getSchool())
+	 *		|else if( this.getSchool().getSchool().size() < slime.getSchool().getSchool().size()) then 
+	 *		|	setNewSchool(this, slime.getSchool())
+	 *@post ... 
+	 *		|slime.getAcceleration().setX(-slime.kinematics.getHorizontalAcceleration())
+	 *		|this.getAcceleration().setX(-kinematics.getHorizontalAcceleration())
+	 *		|slime.getVelocity().setX(0.0)
+	 *		|this.getVelocity().setX(0.0)
+	 *		|setSprite(1- getIndex())
+	 *		|slime.setSprite(1- slime.getIndex())
+	 */
+	private void arrangeSwitch(Slime slime) {
+		if(slime.isRunningLeft()) {
+			slime.startRunLeft(); 
+			startRunRight();
+		}else {
+			startRunLeft(); 
+			slime.startRunRight();
 		}
-	}
-
-	public void arrangeSharkHit(double dt) {
-		if(getBlockTime() == 0) updateHitPoints(-getPoints());
-		setBlockTime(getBlockTime() + dt);
-		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
-			setBlockTime(0.0);
+		School newSchool = null;
+		if(slime.getSchool().getSlimes().size() < getSchool().getSlimes().size()) {
+			newSchool = this.getSchool();
+		}else if(getSchool().getSlimes().size() < slime.getSchool().getSlimes().size()) {
+			newSchool = slime.getSchool();
+			slime = this;
 		}
+		if(newSchool != null) slime.setNewSchool(newSchool);
+		slime.setSprite(1 - slime.getIndex());
+		this.setSprite(1 - getIndex());
+	}
+	
+	/**
+	 * This method is used to synchronize the school
+	 * 
+	 * @post...
+	 * 		| if(getSchool() == null) then return
+	 *		| getSchool().getSlimes().stream().filter(slime -> slime != this).forEach(slime -> slime.setHit(-1))
+	 *
+	 */
+	protected void synchronizeSchool() {
+		if(getSchool() == null) return;
+		getSchool().getSlimes().stream().filter(slime -> slime != this).forEach(slime -> slime.updateHitPoints(-1));
+	}
+
+	/**
+	 * This method arrange the movement of the slime over interval dt
+	 * 
+	 * @param dt
+	 * 			This parameter is used as interval
+	 * 
+	 * @post ...
+	 * 		| if(canRun()) then run(dt) else endRun(dt)
+	 *		| if(!super.isInside()) then terminate()
+	 *
+	 */
+	protected void arrangeMovement(double dt) {
+		if(isMoving()) run(dt);
+		if(!super.isInside()) terminate();
 	}
 
 	@Override
-	protected void arrangeInitialMovement() {}
-
-	@Override
-	protected boolean canMoveInCurrentState() {
-		// TODO Auto-generated method stub
-		if(isDead() || kinematics.isStationary())  return true;
-		return (isRunning() && canRun());
+	public boolean canStartRunRight() {
+		return canRunRight();
 	}
 
 	@Override
-	protected void setNewState() {
-		if(isRunning()) endRun();
+	public boolean canRunRight() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return super.getCollidingCreatures(getRightBorder()).isEmpty() && super.getWorld().shallBePassable(getRightBorder());
+	}
+
+	@Override
+	public boolean isRunningRight() {
+		return kinematics.getXVelocity() > 0 || kinematics.getXAcceleration() > 0;
+	}
+
+	@Override
+	public boolean canStartRunLeft() {
+		return canRunLeft();
+	}
+
+	@Override
+	public boolean canRunLeft() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return super.getCollidingCreatures(getLeftBorder()).isEmpty() && super.getWorld().shallBePassable(getLeftBorder());
+	}
+
+	@Override
+	public boolean isRunningLeft() {
+		return kinematics.getXVelocity() < 0 || kinematics.getXAcceleration() < 0;
+	}
+
+	@Override
+	public void startRunRight() {
+		assert(!isDead() && canStartRunRight());
+		super.setSprite(0);
+		kinematics.setXAcceleration(0.7);	
+	}
+
+	@Override
+	public void endRunRight() {
+		assert(isRunningRight() &&  !isDead());
+		kinematics.setXVelocity(0.0);
+		kinematics.setXAcceleration(0.0);
+	}
+
+	@Override
+	public void startRunLeft() {
+		assert(!isDead() && canStartRunLeft());
+		super.setSprite(1);
+		kinematics.setXAcceleration(-0.7);
+	}
+
+	@Override
+	public void endRunLeft() {
+		assert(isRunningLeft() &&  !isDead());
+		kinematics.setXVelocity(0.0);
+		kinematics.setXAcceleration(0.0);
+	}
+
+	@Override
+	public void run(double deltaT) {
+		super.updateHorizontalComponent(this.getPosition().getX() + (kinematics.getXVelocity()*deltaT)+ (kinematics.getXAcceleration()*deltaT*deltaT/2));
+		kinematics.updateXVelocity(deltaT);
 	}
 	
 }

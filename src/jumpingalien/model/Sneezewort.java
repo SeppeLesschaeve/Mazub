@@ -1,6 +1,5 @@
 package jumpingalien.model;
 
-import be.kuleuven.cs.som.annotate.*;
 import jumpingalien.util.Sprite;
 
 /**
@@ -10,9 +9,8 @@ import jumpingalien.util.Sprite;
  * @author Seppe Lesschaeve (Informatica)
  * 
  */
-public class Sneezewort extends Plant implements Run{
+public class Sneezewort extends Plant implements OnlyHorizontalMovable{
 	
-	private static final double X_VELOCITY = 0.5;
 	
 	/**
 	 * This constructor will set the initial Pixel Position, Actual Position, HitPoint and the images to show the animation
@@ -36,73 +34,21 @@ public class Sneezewort extends Plant implements Run{
 	public Sneezewort(int xPixelLeft, int yPixelBottom, Sprite... sprites){
 		super(xPixelLeft, yPixelBottom, 1, sprites);
 		if(sprites.length != 2) throw new IllegalArgumentException("You must have exactly two images");
-		startMove();
+		kinematics.setXVelocity(-0.5);
 	}
 	
-	/**
-	 * This method returns the orientation of the Sneezewort using the sprite and velocity
-	 * 
-	 * @return ....
-	 * 		| if(super.kinematics.getHorizontalVelocity() < 0) then result == Orientation.NEGATIVE.getValue()
-	 *		| if(super.kinematics.getHorizontalVelocity() > 0) then result == Orientation.POSITIVE.getValue()
-	 */
-	@Basic
-	public int getOrientation() {
-		if(kinematics.getXVelocity() < 0) return -1;
-		else if(kinematics.getXVelocity() > 0) return 1;
-		else return 0;
+
+	@Override
+	public boolean isDead() {
+		return super.getAge() >= 10 || super.getPoints() == 0;
+	}
+	
+	@Override
+	protected void arrangeEat(double dt) {
+		super.updateHitPoints(-1);
+		terminate();
 	}
 
-	/**
-	 * This method will set the velocity to start moving
-	 * 
-	 * @post ...
-	 * 		|super.getVelocity().setX(-X_VELOCITY)
-	 *		|super.getVelocity().setY(0.0)
-	 */
-	@Override
-	protected void startMove() {
-		kinematics.setXVelocity(-X_VELOCITY);
-	}
-	
-	/**
-	 * This method will update the situation of the Sneezewort using deltaT
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as time to be passed
-	 * @throws IllegalArgumentException
-	 * 			...
-	 * 		|Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)
-	 * @post ...
-	 * 		|	for(double time = 0.0, dt = updateDt(deltaT, time); time < deltaT; time += dt, dt = updateDt(deltaT, time)) 
-	 *		|		this.setAge(getAge() + dt)
-	 *		|		if(getAge() < SNEEZE_AGE && getTimer() + dt > Constant.PLANT_SWITCH_TIME.getValue() && !isDead())  
-	 *		|			then arrangeOvershoot(Constant.PLANT_SWITCH_TIME.getValue() - getTimer(), dt)
-	 *		|		else if(getAge() < SNEEZE_AGE && !isDead())  then arrangeMove(dt)
-	 *		|	else 
-	 *		|		if(getWorld() != null && getWorld().getPlayer() != null) then 
-	 *		|			getWorld().handleImpact(getWorld().getPlayer(), this, deltaT)
-	 *		|		super.setDelay(dt)
-	 *@post ...
-	 *		| if(super.getDelay() >= REMOVE_DELAY || !isInside()) then terminate()
-	 * 
-	 */
-	@Override
-	public void advanceTime(double deltaT) throws IllegalArgumentException{
-		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
-		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
-			if(!isDead()) arrangeMove(dt);
-			else {
-				super.setDelay(dt);
-				if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(dt);
-			}
-			this.setAge(getAge() + dt);
-			time +=  dt;
-		}
-		if(super.getDelay() >= Constant.REMOVE_DELAY.getValue() || !isInside()) terminate();
-	}
-	
 	/**
 	 * This method will update the position using deltaT, velocity and the current sprite when not dead 
 	 * 
@@ -118,49 +64,73 @@ public class Sneezewort extends Plant implements Run{
 	 */
 	@Override
 	protected void arrangeMove(double deltaT) {
-		setTimer(getTimer() + deltaT);
-		double overshoot = getTimer()-Constant.PLANT_SWITCH_TIME.getValue();
-		if(getTimer() >= Constant.PLANT_SWITCH_TIME.getValue()) {
-			run(deltaT-overshoot);
-			if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(deltaT-overshoot);
-			endRun();
-			run(overshoot);
-			if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(overshoot);
-		}else {
-			run(deltaT);
-			if(getWorld() != null && getWorld().getPlayer() != null)getWorld().getPlayer().arrangeObjectHit(deltaT);
+		if(getMoveTime() >= Constant.PLANT_SWITCH_TIME.getValue()) {
+			if(isRunningRight()) startRunLeft();
+			else if(isRunningLeft()) startRunRight();
 		}
-		if(!super.isInside()) terminate(); 
+		else run(deltaT);
+		if(!super.isInside()) terminate();
 	}
-	
-	/**
-	 * This method is used to update the Position of the Sneezewort using deltaT as time
-	 *
-	 * @param deltaT
-	 * 			This parameter is used as time
-	 *
-	 * @post ...
-	 * 		| super.getPosition().setX(super.getPosition().getX() + super.kinematics.getHorizontalVelocity()*deltaT)
-	 *		| super.getOrigin().setX((int)(super.getPosition().getX()/0.01))
-	 */
+
+	@Override
+	public boolean canStartRunRight() {
+		return !isDead();
+	}
+
+	@Override
+	public boolean canRunRight() {
+		return !isDead();
+	}
+
+	@Override
+	public boolean isRunningRight() {
+		return kinematics.getXVelocity() > 0;
+	}
+
+	@Override
+	public boolean canStartRunLeft() {
+		return !isDead();
+	}
+
+	@Override
+	public boolean canRunLeft() {
+		return !isDead();
+	}
+
+	@Override
+	public boolean isRunningLeft() {
+		return kinematics.getXVelocity() < 0;
+	}
+
+	@Override
+	public void startRunRight() {
+		kinematics.setXVelocity(0.5);
+		super.setSprite(1);
+		super.setMoveTime(0);
+	}
+
+	@Override
+	public void endRunRight() {
+		kinematics.setXVelocity(0.0);
+	}
+
+	@Override
+	public void startRunLeft() {
+		kinematics.setXVelocity(-0.5);
+		super.setSprite(0);
+		super.setMoveTime(0);
+	}
+
+	@Override
+	public void endRunLeft() {
+		kinematics.setXVelocity(0.0);
+	}
+
 	@Override
 	public void run(double deltaT) {
-		super.updateHorizontalComponent(super.getPosition().getX() + kinematics.getXVelocity()*deltaT);
+		super.setMoveTime(getMoveTime()+deltaT);
+		super.updateHorizontalComponent(this.getPosition().getX() + (kinematics.getXVelocity()*deltaT) + (kinematics.getXAcceleration()*deltaT*deltaT/2));
+		kinematics.updateXVelocity(deltaT);
 	}
-
-	/**
-	 * This method is used to switch to movement 
-	 * 
-	 * @param deltaT
-	 * 			This parameter is unused but must be implemented of the interface Run
-	 * 
-	 * @post ...
-	 * 		| setTimer(0.0) && super.getVelocity().setX(-super.kinematics.getHorizontalVelocity()) && super.setSprite(1-super.getIndex())
-	 */
-	public void endRun() {
-		setTimer(getTimer()-Constant.PLANT_SWITCH_TIME.getValue());
-		kinematics.setXVelocity(-kinematics.getXVelocity()); 
-		super.setSprite(1-super.getIndex());
-	}
-
+		
 }

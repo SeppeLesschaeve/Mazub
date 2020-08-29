@@ -21,11 +21,11 @@ public class Rectangle implements Cloneable{
 		return this.origin;
 	}
 	
-	public int getXCoordinate() {
+	public int getX() {
 		return this.origin.getX();
 	}
 	
-	public int getYCoordinate() {
+	public int getY() {
 		return this.origin.getY();
 	}
 	
@@ -67,16 +67,16 @@ public class Rectangle implements Cloneable{
 
 	@Basic
 	public boolean contains(Position<Integer> point) {
-		return (origin.getX() <= point.getX() && point.getX() <= getWidth() - 1 && 
-				origin.getY() <= point.getY() && point.getY() <= getHeight() - 1);
+		return origin.getX() <= point.getX() && point.getX() <= getWidth() - 1 && 
+				origin.getY() <= point.getY() && point.getY() <= getHeight() - 1;
 	}
 	
 	@Basic
 	public boolean overlaps(Rectangle other) {
-		return(!(this.origin.getY() + getHeight() - 1 < other.origin.getY() 
-				|| this.origin.getY() > other.origin.getY() + other.getHeight() - 1 
-				|| this.origin.getX() + getWidth() - 1 < other.origin.getX() 
-				|| this.origin.getX() > other.origin.getX() + other.getWidth() - 1));
+		return getX() + width -1 >= other.getX()
+				&& other.getX() + other.getWidth() - 1 >= getX()
+				&& getY() + height -1 >= other.getY()
+				&& other.getY() + other.getHeight() - 1 >= getY();
 	}
 
 	public Rectangle clone() {

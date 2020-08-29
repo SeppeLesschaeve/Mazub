@@ -3,60 +3,69 @@ package jumpingalien.model;
 
 public class Kinematics {
 	
-	private double XAcceleration;
-	private double YAcceleration;
-	private double XVelocity;
-	private double YVelocity;
-	private double MinXVelocity;
-	private double MaxXVelocity;
+	private double xAcceleration;
+	private double yAcceleration;
+	private double xVelocity;
+	private double yVelocity;
+	private double minXVelocity = Double.MIN_VALUE;
+	private double maxXVelocity = Double.MAX_VALUE;
+	private double maxYVelocity = Double.MAX_VALUE;
 
 	public double getXAcceleration() {
-		return Double.valueOf(XAcceleration);
+		return Double.valueOf(xAcceleration);
 	}
 
 	public double getYAcceleration() {
-		return Double.valueOf(YAcceleration);
+		return Double.valueOf(yAcceleration);
 	}
 
 	public void setXAcceleration(double x) {
-		this.XAcceleration = x;
+		this.xAcceleration = x;
 	}
 
 	public void setYAcceleration(double y) {
-		this.YAcceleration = y;
+		this.yAcceleration = y;
 	}
 
 	public double getXVelocity() {
-		return Double.valueOf(XVelocity);
+		return Double.valueOf(xVelocity);
 	}
 
 	public double getYVelocity() {
-		return Double.valueOf(YVelocity);
+		return Double.valueOf(yVelocity);
 	}
 
 	public void setXVelocity(double x) {
-		this.XVelocity = x;
+		this.xVelocity = x;
 	}
 
 	public void setYVelocity(double y) {
-		this.YVelocity = y;
+		this.yVelocity = y;
 	}
 
 	public double getMinXVelocity() {
-		return Double.valueOf(MinXVelocity);
+		return Double.valueOf(minXVelocity);
 	}
 
 	public void setMinXVelocity(double min) {
-		this.MinXVelocity = min;
+		this.minXVelocity = min;
 	}
 
 	public double getMaxXVelocity() {
-		return Double.valueOf(MaxXVelocity);
+		return Double.valueOf(maxXVelocity);
 	}
 
 	public void setMaxXVelocity(double max) {
-		if(Math.abs(max) < Math.abs(getMinXVelocity())) this.MaxXVelocity = getMinXVelocity();
-		else this.MaxXVelocity = max;
+		if(Math.abs(max) < Math.abs(minXVelocity)) this.maxXVelocity = minXVelocity;
+		else this.maxXVelocity = max;
+	}
+
+	public double getMaxYVelocity() {
+		return maxYVelocity;
+	}
+
+	public void setMaxYVelocity(double max) {
+		this.maxYVelocity = max;
 	}
 
 	public void setXVelocityBounds(double min, double max) {
@@ -65,32 +74,39 @@ public class Kinematics {
 	}
 	
 	public void roundXVelocity() {
-		if(Math.abs(XVelocity) < Math.abs(getMinXVelocity())) {
-			setXVelocity(getMinXVelocity()*Math.signum(XVelocity));
+		if(Math.abs(xVelocity) < Math.abs(minXVelocity)) {
+			setXVelocity(minXVelocity*Math.signum(xVelocity));
 		}
-		if(Math.abs(XVelocity) > Math.abs(getMaxXVelocity())) {
-			setXVelocity(getMaxXVelocity()*Math.signum(XVelocity));
+		if(Math.abs(xVelocity) > Math.abs(maxXVelocity)) {
+			setXVelocity(maxXVelocity*Math.signum(xVelocity));
 		}
 	}
 
 	public void updateXVelocity(double time) {
-		XVelocity += XAcceleration*time;
+		xVelocity += xAcceleration*time;
 		this.roundXVelocity();
 	}
 
+	public void roundYVelocity() {
+		if(Math.abs(yVelocity) > Math.abs(maxYVelocity)) {
+			setYVelocity(maxYVelocity*Math.signum(yVelocity));
+		}
+	}
+	
 	public void updateYVelocity(double time) {
-		YVelocity += YAcceleration*time;
-		this.roundXVelocity();	
+		yVelocity += yAcceleration*time;
+		this.roundYVelocity();	
 	}
 
 	public boolean isStationary() {
-		return XVelocity == 0 && YVelocity == 0 && XAcceleration == 0 && YAcceleration == 0;
+		return xVelocity == 0 && yVelocity == 0 && xAcceleration == 0 && yAcceleration == 0;
 	}
 	
 	public double calculateNewTimeSlice(double dt, double time) {
-		double denominator = Math.sqrt( Math.pow(XVelocity, 2) + Math.pow(YVelocity, 2)) + 
-				Math.sqrt( Math.pow(XAcceleration, 2) + Math.pow(YAcceleration, 2))*dt;
+		double denominator = Math.sqrt( Math.pow(xVelocity, 2) + Math.pow(yVelocity, 2)) + 
+				Math.sqrt( Math.pow(xAcceleration, 2) + Math.pow(yAcceleration, 2))*dt;
 		double result = 0.01 / denominator;
+		if(Double.isInfinite(result) || result > 0.01) result = 0.01;
 		if(time + result > dt) {
 			return dt-time;
 		}

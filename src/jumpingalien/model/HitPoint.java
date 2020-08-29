@@ -26,10 +26,10 @@ public class HitPoint implements Cloneable{
 	
 	public void updatePoints(int points) {
 		this.points += points;
-		if(this.getPoints() < this.getMinimum()) {
+		if(this.points < this.minimum) {
 			this.points = minimum;
 		}
-		if(this.getPoints() > this.getMaximum()) {
+		if(this.points > this.maximum) {
 			this.points = maximum;
 		}
 	}

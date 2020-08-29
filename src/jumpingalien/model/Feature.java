@@ -24,7 +24,7 @@ public enum Feature {
 	}
 
 	public boolean isPassable() { 
-		return getFeatureId() != SOLID_GROUND.getFeatureId() && getFeatureId() != ICE.getFeatureId(); 	
+		return featureId != SOLID_GROUND.getFeatureId() && featureId != ICE.getFeatureId(); 	
 	}
 
 	@Override

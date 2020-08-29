@@ -19,10 +19,9 @@ import jumpingalien.util.Sprite;
  * @author Seppe Lesschaeve (Informatica)
  *
  */
-public abstract class Organism extends GameObject{
+public abstract class Organism extends GameObject implements Movable{
 	
 	private HitPoint hitPoint;
-	private double blockTime = 0.0;
 	private double delay = 0.0;
 	protected Kinematics kinematics = new Kinematics() ;
 
@@ -54,19 +53,7 @@ public abstract class Organism extends GameObject{
 	
 	public double[] getVelocity() {
 		return new double[] {kinematics.getXVelocity(), kinematics.getYVelocity()};
-	}
-	
-	protected void setSprite(int index){
-		if(index < 8) {
-			setSprite(getSprites()[index]);
-		}else if(getOrientation() == 1 && index >= ((getSprites().length-8)/2)+8){
-			index = 8;
-		}else if(getOrientation() == -1 && index >= getSprites().length) {
-			index = ((getSprites().length-8)/2)+8;
-		}
-		setSprite(getSprites()[index]);
-		super.updateDimension(getSprite().getWidth(),getSprite().getHeight());
-	}
+	}	
 	
 	public double getDelay() {
 		return Double.valueOf(delay);
@@ -78,20 +65,6 @@ public abstract class Organism extends GameObject{
 			this.delay = Constant.REMOVE_DELAY.getValue();
 	}
 	
-	public double getBlockTime() {
-		return Double.valueOf(blockTime);
-	}
-
-	public void setBlockTime(double blockTime) {
-		this.blockTime = blockTime;
-	}
-
-	public boolean isRunning() {
-		return kinematics.getXVelocity() != 0;
-	}
-
-	public abstract int getOrientation();
-	public abstract void advanceTime(double deltaT);
 	public abstract boolean isDead();
 	
 	public void terminate() {
@@ -99,93 +72,91 @@ public abstract class Organism extends GameObject{
 			((Slime) this).getSchool().removeSlime(((Slime) this));
 		}
 		if(getPoints() != 0) updateHitPoints(-getPoints());
-		if(this instanceof Spider) ((Spider) this).setLegs(0);
 		if(getWorld() == null) return;
 		if(this == getWorld().getPlayer()) this.getWorld().unsetPlayer();
 		this.getWorld().removeGameObject(this);
-		this.setWorld(null);
 	}
 
 	protected Rectangle getUpBorder() {
 		Rectangle up = null;
-		if(getOrientation() == -1) {
-			up = new Rectangle(getRectangle().getXCoordinate()-1, getRectangle().getYCoordinate()+getRectangle().getHeight(), getRectangle().getWidth(), 1);
-		}else if(getOrientation() == 0) {
-			up = new Rectangle(getRectangle().getXCoordinate(), getRectangle().getYCoordinate()+getRectangle().getHeight(), getRectangle().getWidth(), 1);
-		}else if(getOrientation() == 1) {
-			up = new Rectangle(getRectangle().getXCoordinate()+1, getRectangle().getYCoordinate()+getRectangle().getHeight(), getRectangle().getWidth(), 1);
+		if(kinematics.getXVelocity() < 0) {
+			up = new Rectangle(getRectangle().getX()-1, getRectangle().getY()+getRectangle().getHeight(), getRectangle().getWidth(), 1);
+		}else if(kinematics.getXVelocity() == 0) {
+			up = new Rectangle(getRectangle().getX(), getRectangle().getY()+getRectangle().getHeight(), getRectangle().getWidth(), 1);
+		}else if(kinematics.getXVelocity() > 0) {
+			up = new Rectangle(getRectangle().getX()+1, getRectangle().getY()+getRectangle().getHeight(), getRectangle().getWidth(), 1);
 		}
 		return up;
 	}
 	
 	protected Rectangle getDownBorder() {
 		Rectangle down = null;
-		if(getOrientation() == -1) {
-			down = new Rectangle(getRectangle().getXCoordinate()-1, getRectangle().getYCoordinate()-1, getRectangle().getWidth(), 1);
-		}else if(getOrientation() == 0) {
-			down = new Rectangle(getRectangle().getXCoordinate(), getRectangle().getYCoordinate()-1, getRectangle().getWidth(), 1);
-		}else if(getOrientation() == 1) {
-			down = new Rectangle(getRectangle().getXCoordinate()+1, getRectangle().getYCoordinate()-1, getRectangle().getWidth(), 1);
+		if(kinematics.getXVelocity() < 0) {
+			down = new Rectangle(getRectangle().getX()-1, getRectangle().getY()-1, getRectangle().getWidth(), 1);
+		}else if(kinematics.getXVelocity() == 0) {
+			down = new Rectangle(getRectangle().getX(), getRectangle().getY()-1, getRectangle().getWidth(), 1);
+		}else if(kinematics.getXVelocity() > 0) {
+			down = new Rectangle(getRectangle().getX()+1, getRectangle().getY()-1, getRectangle().getWidth(), 1);
 		}
 		return down;
 	}
 	
 	protected Rectangle getLeftBorder() {
-		return new Rectangle(getRectangle().getXCoordinate()-1, getRectangle().getYCoordinate(), 1, getRectangle().getHeight());
+		return new Rectangle(getRectangle().getX()-1, getRectangle().getY()+1, 1, getRectangle().getHeight()-1);
 	}
 
 	protected Rectangle getRightBorder() {
-		return new Rectangle(getRectangle().getXCoordinate()+getRectangle().getWidth(), getRectangle().getYCoordinate(), 1, getRectangle().getHeight());
+		return new Rectangle(getRectangle().getX()+getRectangle().getWidth(), getRectangle().getY()+1, 1, getRectangle().getHeight()-1);
 	}
 	
 	public boolean isInside() {
-		if(this.getWorld() == null) {return true;}
-		if(this.getPosition().getX() < 0 || this.getPosition().getY() < 0) return false;
+		if(this.getWorld() == null) return true;
 		return this.getWorld().getGameWorld().contains(getRectangle().getOrigin());
 	}
 	
-	public void changeActualPosition(double[] newPosition) throws IllegalArgumentException{
+	public void changeActualPosition(double[] newPosition){
 		if(newPosition == null || newPosition.length != 2 || (((Double) newPosition[0]).isNaN() || ((Double) newPosition[1]).isNaN()))
 			throw new IllegalArgumentException("The desired position can not be null, must be two-dimensional and not NaN values.");
 		if(getWorld() != null && !(this instanceof Plant)) {
-			for(int newX = (int)(newPosition[0]/0.01), pixelX = newX; pixelX < newX+getSprite().getWidth(); pixelX+=getWorld().getTileLength()) {
-				for(int newY = (int)(newPosition[1]/0.01), pixelY= newY; pixelY < newY+getSprite().getHeight(); pixelY+= getWorld().getTileLength()) {
-					if(!getWorld().getTileFeature(pixelX, pixelY).isPassable()) 
-						throw new IllegalArgumentException("You can not place the Game Object in Solid Ground");
-				}
-			}
+			Rectangle newPlace = new Rectangle((int)(newPosition[0]/0.01), (int)(newPosition[1]/0.01), getSprite().getWidth(), getSprite().getHeight()); 
+			if(!getWorld().shallBePassable(newPlace)) throw new IllegalArgumentException("You can not place the Game Object in Solid Ground");
 		}
 		super.updatePosition(newPosition[0], newPosition[1]);
 		if(getWorld() != null && !getWorld().getGameWorld().contains(getRectangle().getOrigin())) terminate();
 	}
 	
-	protected Set<Organism> overlappingGameObject(Rectangle rect){
+	protected Set<Organism> getCollidingCreatures(){
 		Set<Organism> overlappingObjects = new HashSet<>();
-		if(this.getWorld() == null || this.isTerminated() || rect == null) return overlappingObjects;
+		if(super.isStillNotInAGameWorld()) return overlappingObjects;
+		Rectangle fullOuterRectangle = new Rectangle(getRectangle().getX()-1,getRectangle().getY()-1, getSprite().getWidth()+2,getSprite().getHeight()+2);
 		for(Object object: this.getWorld().getGameObjects()) {
-			if(!(object instanceof Plant) || this instanceof Mazub) {
-				if(object instanceof Plant && this instanceof Mazub && ((Plant) object).getRectangle().overlaps(getRectangle())) {
-					overlappingObjects.add((Plant) object);
-				}else if(rect.overlaps(((Organism) object).getRectangle()) && object != this) {
-					overlappingObjects.add((Organism) object);
-				}
+			if(fullOuterRectangle.overlaps(((Organism) object).getRectangle()) && object != this) {
+				overlappingObjects.add((Organism) object);
 			}
 		}
 		return overlappingObjects;
 	}
 	
-	protected Set<Organism> getCollidingObjects() {
-		Set<Organism> objects;
-		if(kinematics.getYVelocity() > 0) {
-			objects = overlappingGameObject(getUpBorder());
-			if(getOrientation() ==  -1) objects.addAll(overlappingGameObject(getLeftBorder()));
-			else if(getOrientation() == 1) objects.addAll(overlappingGameObject(getRightBorder()));
-		}else {
-			objects = overlappingGameObject(getDownBorder());
-			if(getOrientation() ==  -1) objects.addAll(overlappingGameObject(getLeftBorder()));
-			else if(getOrientation() == 1) objects.addAll(overlappingGameObject(getRightBorder()));
+	protected Set<Organism> getOverlappingPlants(){
+		Set<Organism> overlappingPlants = new HashSet<>();
+		if(super.isStillNotInAGameWorld()) return overlappingPlants;
+		for(Object object: this.getWorld().getGameObjects()) {
+			if(object instanceof Plant && ((Plant) object).getRectangle().overlaps(getRectangle())) {
+				overlappingPlants.add((Plant) object);
+			}
 		}
-		return objects;
+		return overlappingPlants;
+	}
+	
+	protected Set<Organism> getCollidingCreatures(Rectangle border){
+		Set<Organism> overlappingObjects = new HashSet<>();
+		if(super.isStillNotInAGameWorld()) return overlappingObjects;
+		for(Object object: this.getWorld().getGameObjects()) {
+			if(border.overlaps(((Organism) object).getRectangle()) && object != this) {
+				overlappingObjects.add((Organism) object);
+			}
+		}
+		return overlappingObjects;
 	}
 	
 	protected int getGameObjectType(Organism gameObject) {
@@ -197,4 +168,5 @@ public abstract class Organism extends GameObject{
 		else if(gameObject instanceof Spider) return 5;
 		else return -1;
 	}
+
 }

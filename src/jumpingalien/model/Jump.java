@@ -1,13 +1,43 @@
 package jumpingalien.model;
 
-import be.kuleuven.cs.som.annotate.Raw;
-
 public interface Jump {
 	
-	@Raw
-	public void jump(double deltaT);
+	boolean canStartJump();
 	
-	@Raw
-	public void endJump();
-
+	boolean canJump();
+	
+	boolean isGoingUp();
+	
+	boolean canStartFall();
+	
+	boolean canFall();
+	
+	boolean isGoingDown();
+	
+	default boolean isJumping() {
+		return isGoingUp() || isGoingDown();
+	}
+	
+	default boolean canJumpInCurrentState() {
+		if(isGoingUp()) return canJump();
+		if(isGoingDown()) return canFall();
+		return true;
+	}
+	
+	void startJump();
+	
+	void endGoingUp();
+	
+	void startFall();
+	
+	void endGoingDown();
+	
+	default void endJump() {
+		if(!isJumping()) throw new IllegalStateException();
+		if(isGoingUp()) endGoingUp();
+		else endGoingDown();
+	}
+	
+	void jump(double deltaT);
+	
 }

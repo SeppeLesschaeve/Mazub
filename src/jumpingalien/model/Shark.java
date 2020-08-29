@@ -3,7 +3,6 @@ package jumpingalien.model;
 import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.Basic;
-import be.kuleuven.cs.som.annotate.Raw;
 import jumpingalien.util.Sprite;
 
 /**
@@ -20,15 +19,13 @@ import jumpingalien.util.Sprite;
  * @author Seppe Lesschaeve (Informatica)
  *
  */
-public class Shark extends Creature implements Run, Jump{
+public class Shark extends Creature implements TwoDimensionMovable{
 	
-	private double moveTime= 0.0;
-	private double outWaterTime =0.0;
+	private double featureTime = 0.0;
+	private double mazubTime = 0.0;
+	private double moveTime = 0.0;
 	private double restTime = 0.0;
 	private int newIndex = 1;
-	private static final  double X_ACC = 1.5;
-	private static final double Y_ACC = -10.0;
-	private static final double Y_VEL = 2.0;
 	
 	/**This constructor will set the initial Pixel Position, Actual Position, Dimension and the images to show the animation
 	 * 
@@ -45,25 +42,54 @@ public class Shark extends Creature implements Run, Jump{
 	 * @effect ...
 	 * 		|super(pixelLeftX, 100, 0, Integer.MAX_VALUE, pixelBottomY, sprites)
 	 * @post ...
-	 * 		|super.getAcceleration().setX(-X_ACC)
+	 * 		|super.getAcceleration().setX(-1.5)
 	 *		|super.getAcceleration().setY(Y_ACC)
 	 * 
 	 */
-	public Shark(int pixelLeftX, int pixelBottomY, Sprite... sprites) throws IllegalArgumentException{
+	public Shark(int pixelLeftX, int pixelBottomY, Sprite... sprites){
 		super(pixelLeftX, pixelBottomY, 100, 0, Integer.MAX_VALUE, sprites);
-		for(int index = 0; index < sprites.length; index++) {
-			if(sprites[index] == null) {
-				throw new IllegalArgumentException("One of the given sprites is null and so can not be used");
-			}
-		}
 		if(sprites.length != 3) {
 			throw new IllegalArgumentException("You can not have more or less than three sprites for a shark");
 		}
 		kinematics.setXVelocityBounds(0.0, Double.POSITIVE_INFINITY);
-		kinematics.setXAcceleration(-X_ACC);
-		kinematics.setYAcceleration(Y_ACC);
+		kinematics.setXAcceleration(-1.5);
+		kinematics.setYAcceleration(-10.0);
 	}
 	
+	/**
+	 * This method returns Out Water Time
+	 * 
+	 * @return ...
+	 * 		|result == outWaterTime
+	 * 
+	 */
+	@Basic
+	public double getOutWaterTime() {
+		return featureTime;
+	}
+
+	/**
+	 * This method is used to set the Out Water Time
+	 * 
+	 * @param outWaterTime
+	 * 			This parameter is used to set the Out Water Time
+	 * 
+	 * @post ...
+	 * 		|(new this).outWaterTime = outWaterTime
+	 * 
+	 */
+	protected void setOutWaterTime(double outWaterTime) {
+		this.featureTime = outWaterTime;
+	}
+	
+	public double getMazubTime() {
+		return mazubTime;
+	}
+
+	public void setMazubTime(double mazubTime) {
+		this.mazubTime = mazubTime;
+	}
+
 	/**
 	 * This method returns Move Time
 	 * 
@@ -90,32 +116,6 @@ public class Shark extends Creature implements Run, Jump{
 		this.moveTime = moveTime;
 	}
 	
-	/**
-	 * This method returns Out Water Time
-	 * 
-	 * @return ...
-	 * 		|result == outWaterTime
-	 * 
-	 */
-	@Basic
-	public double getOutWaterTime() {
-		return outWaterTime;
-	}
-
-	/**
-	 * This method is used to set the Out Water Time
-	 * 
-	 * @param outWaterTime
-	 * 			This parameter is used to set the Out Water Time
-	 * 
-	 * @post ...
-	 * 		|(new this).outWaterTime = outWaterTime
-	 * 
-	 */
-	protected void setOutWaterTime(double outWaterTime) {
-		this.outWaterTime = outWaterTime;
-	}
-
 	/**
 	 * This method returns Rest Time
 	 * 
@@ -161,76 +161,136 @@ public class Shark extends Creature implements Run, Jump{
 	 *		|super.setSprite(newIndex)
 	 */
 	public void setNewIndex() {
-		if(getNewIndex() == 1) this.newIndex = 2;
-		else this.newIndex = 1;
+		if(newIndex == 1) this.newIndex = 2;
+		else if(newIndex == 2) this.newIndex = 1;
+		else this.newIndex = 0;
 		super.setSprite(newIndex);
 	}
 	
-	/**
-	 * This method is used to arrange the vertical movement using deltaT as time
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as the time
-	 * 
-	 * @post ...
-	 * 		|super.updateY(deltaT) && super.getVelocity().accelerateY(getAcceleration(), deltaT)
-	 */
-	@Override @Raw
-	public void jump(double deltaT){
-		super.updateY(deltaT); 
-		kinematics.updateYVelocity(deltaT);
+	@Override
+	protected boolean canMoveInCurrentState() {
+		return canJumpInCurrentState() && canRunInCurrentState();
 	}
-
+	
+	@Override
+	protected void setNewState() {
+		if(isMoving()) endRun();
+		if(isJumping()) endJump();
+	}
+	
 	/**
-	 * This method is used to stop the vertical movement
+	 * This method is returns whether the shark is located in water or not
 	 * 
+	 * @return ...
+	 * 		| if(getWorld() == null) then result == false
+	 *		|for(int pixelX = super.getOrigin().getX(); pixelX < super.getOrigin().getX()+super.getRectangle().getDimension().getWidth(); pixelX++)
+	 *		|	for(int pixelY= super.getOrigin().getY(); pixelY < super.getOrigin().getY()+super.getRectangle().getDimension().getHeight(); pixelY++)
+	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER) then result == true
+	 *		|result == false
+	 *
+	 */
+	@Basic
+	public boolean swimsInWater() {
+		if(getWorld() == null) return false;
+		int tileLength = super.getWorld().getTileLength();
+		int newX = 0;
+		int newY = 0;
+		for(int pixelX = super.getRectangle().getX(); pixelX < super.getRectangle().getX()+super.getRectangle().getWidth()-1; pixelX+=newX) {
+			for(int pixelY= super.getRectangle().getY(); pixelY < super.getRectangle().getY()+super.getRectangle().getHeight()-1; pixelY+=newY) {
+				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER) return true;
+				newY = Math.min(tileLength, super.getRectangle().getY() + super.getRectangle().getHeight()-1 - pixelY);
+				if(newY < tileLength) newY=1;
+			}
+			newX = Math.min(tileLength, super.getRectangle().getX() + super.getRectangle().getWidth()-1 - pixelX);
+			if(newX < tileLength) newX=1;
+		}
+		return false;
+	}
+	
+	public boolean isFullySwimming() {
+		if(getWorld() == null) return false;
+		Rectangle upper = new Rectangle(getRectangle().getX(), getRectangle().getY()+getRectangle().getHeight()-1,getRectangle().getWidth(),1);
+		int tileLength = super.getWorld().getTileLength();
+		int newX = 0;
+		int newY = 0;
+		for(int pixelX = upper.getX(); pixelX < upper.getX()+upper.getWidth()-1; pixelX+=newX) {
+			for(int pixelY= upper.getY(); pixelY < upper.getY()+upper.getHeight()-1; pixelY+=newY) {
+				if(getWorld().getTileFeature(pixelX, pixelY) != Feature.WATER) return false;
+				newY = Math.min(tileLength, super.getRectangle().getY() + super.getRectangle().getHeight()-1 - pixelY);
+				if(newY < tileLength) newY=1;
+			}
+			newX = Math.min(tileLength, super.getRectangle().getX() + super.getRectangle().getWidth()-1 - pixelX);
+			if(newX < tileLength) newX=1;
+		}
+		return true;
+		
+	}
+	
+	/**
+	 * This method is used to arrange the hitPoints because of being out of water based on interval dt
+	 *
 	 * @param dt
-	 * 			This parameter is unused but must be implemented from interface Jump
+	 * 		This parameter is used as interval
 	 * 
 	 * @post ...
-	 * 		| if(kinematics.getVerticalVelocity() > 0) then getVelocity().setY(0.0)
-	 *		| else getAcceleration().setY(0.0) && getVelocity().setY(0.0)
+	 * 		| if(!swimsInWater()) then 
+	 *		|	setOutWaterTime(getOutWaterTime() + dt)
+	 *		|	and if(getOutWaterTime() >= Constant.SHARK_OUT_WATER_TIME.getValue()) then 
+	 *		|		super.getHitPoint().setPoint(Constant.SHARK_OUT_WATER.getValue()) && setOutWaterTime(0.0)
+	 *		| else setOutWaterTime(0.0)
+	 * 
 	 */
-	@Raw
-	public void endJump(){
-		if(kinematics.getYVelocity() > 0.0) {
-			kinematics.setYVelocity(0.0);
+	protected void arrangeFeatureHit(double dt) {
+		if(!swimsInWater()) {
+			setOutWaterTime(getOutWaterTime() + dt);
+			if(getOutWaterTime() >= Constant.SHARK_OUT_WATER_TIME.getValue()) {
+				super.updateHitPoints((int) Constant.SHARK_OUT_WATER.getValue());
+				setOutWaterTime(0.0);
+			}
 		}else {
-			kinematics.setYAcceleration(0.0);
-			kinematics.setYVelocity(0.0);
+			setOutWaterTime(0.0);
 		}
 	}
 
 	/**
-	 * This method is used to arrange the horizontal movement using deltaT as time
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as time
-	 * @post ...
-	 * 		| super.updateX(deltaT) && super.getVelocity().accelerateX(getAcceleration(), deltaT)
-	 *		|if(kinematics.getHorizontalVelocity() > 0) then super.setSprite(2)
-	 *		|else if(kinematics.getHorizontalVelocity() < 0) then super.setSprite(1)
-	 */
-	@Override @Raw
-	public void run(double deltaT) {
-		super.updateX(deltaT); 
-		kinematics.updateXVelocity(deltaT);
-		if(kinematics.getXVelocity() > 0) super.setSprite(2);
-		else if(kinematics.getXVelocity() < 0) super.setSprite(1);
-	}
-
-	/**
-	 * This method is used to end the movement
+	 * This method is used to arrange the Hit Points because of hit with objects using dt as time
 	 * 
 	 * @param dt
-	 * 			This parameter is unused but must be implemented from interface Run
+	 * 			This parameter is used as time
 	 * 
 	 * @post ...
-	 * 		| super.getVelocity().setX(0.0) && super.getAcceleration().setX(0.0)
+	 * 		| Set<GameObject> objects = getCollidingObjects()
+	 *		| if(getWorld() != null) 
+	 *		|	for(GameObject object: objects) 
+	 *		|		if(object instanceof Shark && object.getBlockTime() == 0) then arrangeSwitch(this)
+	 *		|		else getWorld().handleImpact(this, object, dt)
+	 *
 	 */
-	public void endRun() {
-		kinematics.setXAcceleration(0.0);
-		kinematics.setXVelocity(0.0);
+	protected void arrangeObjectHit(double dt) {
+		Set<Organism> objects = getCollidingCreatures();
+		if(mazubTime != 0) setMazubTime(mazubTime + dt);
+		if(getWorld() != null) {
+			for(Organism object: objects) {
+				int type = getGameObjectType(object);
+				switch(type) {
+				case 0:if(!object.isDead())arrangeMazubHit(dt);break;
+				case 3:if(!object.isDead())arrangeSlimeHit();break;
+				case 4:arrangeSwitch(this);break;
+				default: break;
+				}
+			}
+		}
+	}
+	
+	public void arrangeMazubHit(double dt) {
+		if(mazubTime == 0) {
+			updateHitPoints((int) Constant.SHARK_MAZUB.getValue());
+			setMazubTime(mazubTime + dt);
+		}
+	}
+	
+	public void arrangeSlimeHit() {
+		updateHitPoints((int) Constant.SHARK_SLIME.getValue());
 	}
 	
 	/**
@@ -255,8 +315,9 @@ public class Shark extends Creature implements Run, Jump{
 	 * 		| if(!super.isInside()) then terminate()
 	 */
 	protected void arrangeMovement(double dt) {
-		if(isDead()) return;
-		if(isRunning()) run(dt);
+		if(kinematics.isStationary() && moveTime == 0 && canStartJump()) startJump();
+		if(kinematics.isStationary() && canStartFall()) startFall();
+		if(isMoving()) run(dt);
 		if(isJumping()) jump(dt);
 		if(getMoveTime() < Constant.SHARK_SWITCH_TIME.getValue()) {
 			setMoveTime(getMoveTime() + dt);
@@ -267,7 +328,8 @@ public class Shark extends Creature implements Run, Jump{
 			kinematics.setXVelocity(0.0);
 			if(getRestTime() >= Constant.SHARK_REST_TIME.getValue()) {
 				arrangeNewMoveTime();
-				setRestTime(0.0); setMoveTime(0.0);
+				setRestTime(0.0); 
+				setMoveTime(0.0);
 			}
 		}
 		if(!super.isInside()) terminate();
@@ -279,122 +341,15 @@ public class Shark extends Creature implements Run, Jump{
 	 * @effect ...
 	 * 		|setNewIndex()
 	 * @post ...
-	 * 		|if(getNewIndex() == 2) then super.getAcceleration().setX(X_ACC) 
-	 *		|else super.getAcceleration().setX(-X_ACC)
-	 *		|if(canStartJump()) then super.getAcceleration().setY(Y_ACC) && super.getVelocity().setY(Y_VEL)
+	 * 		|if(getNewIndex() == 2) then super.getAcceleration().setX(1.5) 
+	 *		|else super.getAcceleration().setX(-1.5)
+	 *		|if(canStartJump()) then super.getAcceleration().setY(-10.0) && super.getVelocity().setY(Y_VEL)
 	 */
 	private void arrangeNewMoveTime() {
 		setNewIndex();
-		if(getNewIndex() == 2) kinematics.setXAcceleration(X_ACC); 
-		else kinematics.setXAcceleration(-X_ACC);
-		if(canStartJump()) {
-			kinematics.setYAcceleration(Y_ACC);
-			kinematics.setYVelocity(Y_VEL);
-		}
-	}
-	
-	/**
-	 * This method returns whether the shark can jump
-	 * 
-	 * @return ...
-	 * 		| if(kinematics.getVerticalAcceleration() == 0) then result == false
-	 * 		   ...
-	 *		| if(kinematics.getVerticalVelocity() > 0)
-	 *		|		result == super.overlappingGameObject(getUpBorder()).isEmpty() && super.getWorld().shallBePassable(getUpBorder())
-	 *		|else result == mustFall()
-	 */
-	@Override
-	protected boolean canJump() {
-		if(kinematics.getYAcceleration() == 0) return false;
-		if(kinematics.getYVelocity() > 0)
-			return super.overlappingGameObject(getUpBorder()).isEmpty() && super.getWorld().shallBePassable(getUpBorder());
-		else 
-			return mustFall();
-	}
-	
-	/**
-	 * This method returns whether the shark is running or not
-	 * 
-	 * @return ...
-	 * 		| result == kinematics.getHorizontalAcceleration() != 0
-	 */
-	@Override
-	public boolean isRunning() {
-		return kinematics.getXAcceleration() != 0;
-	}
-	
-	/**
-	 * This method is used to evaluate if the shark can start moving at current start
-	 * 
-	 * @return ...
-	 * 		| result == (getWorld() != null && (swimsInWater() || !super.getWorld().shallBePassable(getDownBorder()))
-	 */
-	private boolean canStartJump() {
-		if(getWorld() == null) return false;
-		return swimsInWater() || !super.getWorld().shallBePassable(getDownBorder());
-	}
-
-	/**
-	 * This method returns whether the shark is jumping or not
-	 * 
-	 * @return ...
-	 * 		| result ==  kinematics.getVerticalAcceleration() != 0
-	 */
-	private boolean isJumping() {
-		return kinematics.getYAcceleration() != 0;
-	}
-
-	/**
-	 * This method is used to arrange the hitPoints because of being out of water based on interval dt
-	 *
-	 * @param dt
-	 * 		This parameter is used as interval
-	 * 
-	 * @post ...
-	 * 		| if(!swimsInWater()) then 
-	 *		|	setOutWaterTime(getOutWaterTime() + dt)
-	 *		|	and if(getOutWaterTime() >= Constant.SHARK_OUT_WATER_TIME.getValue()) then 
-	 *		|		super.getHitPoint().setPoint(Constant.SHARK_OUT_WATER.getValue()) && setOutWaterTime(0.0)
-	 *		| else setOutWaterTime(0.0)
-	 * 
-	 */
-	protected void arrangeFeatureHit(double dt) {
-		if(!swimsInWater()) {
-			setOutWaterTime(getOutWaterTime() + dt);
-			if(getOutWaterTime() >= Constant.SHARK_OUT_WATER_TIME.getValue()) {
-				super.updateHitPoints((int) Constant.SHARK_OUT_WATER.getValue());
-				setOutWaterTime(0.0);
-			}
-		}else setOutWaterTime(0.0);
-	}
-
-	/**
-	 * This method is used to arrange the Hit Points because of hit with objects using dt as time
-	 * 
-	 * @param dt
-	 * 			This parameter is used as time
-	 * 
-	 * @post ...
-	 * 		| Set<GameObject> objects = getCollidingObjects()
-	 *		| if(getWorld() != null) 
-	 *		|	for(GameObject object: objects) 
-	 *		|		if(object instanceof Shark && object.getBlockTime() == 0) then arrangeSwitch(this)
-	 *		|		else getWorld().handleImpact(this, object, dt)
-	 *
-	 */
-	protected void arrangeObjectHit(double dt) {
-		Set<Organism> objects = getCollidingObjects();
-		if(getWorld() != null) {
-			for(Organism object: objects) {
-				int type = getGameObjectType(object);
-				switch(type) {
-				case 0:arrangeMazubHit(dt);break;
-				case 3:arrangeSlimeHit(dt);break;
-				case 4: if(object.getBlockTime() == 0)arrangeSwitch(this);break;
-				default: break;
-				}
-			}
-		}
+		if(newIndex == 2) startRunRight();
+		else if(newIndex == 1)startRunLeft();
+		if(canStartJump() && !isGoingDown()) startJump();
 	}
 	
 	/**
@@ -409,98 +364,155 @@ public class Shark extends Creature implements Run, Jump{
 	 * 		| this.getAcceleration().setX(0.0) && this.setNewIndex() && this.getVelocity().setX(0.0)
 	 */
 	private void arrangeSwitch(Shark shark) {
-		shark.kinematics.setXAcceleration(0.0);
+		if(shark.isRunningLeft()) {
+			shark.startRunLeft(); 
+			startRunRight();
+		}else {
+			startRunLeft(); 
+			shark.startRunRight();
+		}
 		shark.setNewIndex();
-		shark.kinematics.setXVelocity(0.0);
-		kinematics.setXAcceleration(0.0);
 		setNewIndex();
+	}
+
+	@Override
+	public boolean canStartJump() {
+		return swimsInWater()  || !super.getWorld().shallBePassable(getDownBorder());
+	}
+
+	@Override
+	public boolean canJump() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return super.getCollidingCreatures(getUpBorder()).isEmpty() && super.getWorld().shallBePassable(getUpBorder());
+	}
+
+	@Override
+	public boolean isGoingUp() {
+		return kinematics.getYVelocity() > 0 && kinematics.getYAcceleration() < 0;
+	}
+
+	@Override
+	public boolean canStartFall() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return false;
+		return super.getCollidingCreatures(getDownBorder()).isEmpty()  && super.getWorld().shallBePassable(getDownBorder());
+	}
+
+	@Override
+	public boolean canFall() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return super.getCollidingCreatures(getDownBorder()).isEmpty() && super.getWorld().shallBePassable(getDownBorder()) && !isFullySwimming();
+	}
+
+	@Override
+	public boolean isGoingDown() {
+		return kinematics.getYVelocity() <= 0 && kinematics.getYAcceleration() < 0;
+	}
+
+	@Override
+	public void startJump() {
+		if(!canStartJump() || isJumping() || isDead()) throw new IllegalStateException("Shark can not start jumping if he did jump before it.");
+		kinematics.setYVelocity(2.0);
+		kinematics.setYAcceleration(-10.0);
+	}
+
+	@Override
+	public void endGoingUp() {
+		if(kinematics.getYVelocity() > 0) kinematics.setYVelocity(0.0);
+		kinematics.setYAcceleration(0.0);	
+	}
+
+	@Override
+	public void startFall() {
+		if(!canStartFall() || isDead()) throw new IllegalStateException();
+		kinematics.setYVelocity(0.0);
+		kinematics.setYAcceleration(-10.0);
+	}
+
+	@Override
+	public void endGoingDown() {
+		kinematics.setYVelocity(0.0);
+		kinematics.setYAcceleration(0.0);
+	}
+
+	@Override
+	public void jump(double deltaT) {
+		super.updateVerticalComponent(this.getPosition().getY() + (kinematics.getYVelocity()*deltaT) + (kinematics.getYAcceleration()*deltaT*deltaT/2));
+		kinematics.updateYVelocity(deltaT);	
+	}
+
+	@Override
+	public boolean canStartRunRight() {
+		return canRunRight();
+	}
+
+	@Override
+	public boolean canRunRight() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return super.getCollidingCreatures(getRightBorder()).isEmpty() && super.getWorld().shallBePassable(getRightBorder());
+	}
+
+	@Override
+	public boolean isRunningRight() {
+		return kinematics.getXVelocity() > 0 || kinematics.getXAcceleration() > 0;
+	}
+
+	@Override
+	public boolean canStartRunLeft() {
+		return canRunLeft();
+	}
+
+	@Override
+	public boolean canRunLeft() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return super.getCollidingCreatures(getLeftBorder()).isEmpty() && super.getWorld().shallBePassable(getLeftBorder());
+	}
+
+	@Override
+	public boolean isRunningLeft() {
+		return kinematics.getXVelocity() < 0 || kinematics.getXAcceleration() < 0;
+	}
+
+	@Override
+	public void startRunRight() {
+		assert(!isMoving() && !isDead() && canStartRunRight());
+		kinematics.setXVelocity( 1.0);
+		kinematics.setXVelocityBounds(1.0, 3.0);
+		kinematics.setXAcceleration(0.9);	
+	}
+
+	@Override
+	public void endRunRight() {
+		assert(isRunningRight() &&  !isDead());
 		kinematics.setXVelocity(0.0);
-	}
-
-	/**
-	 * This method is returns whether the shark is located in water or not
-	 * 
-	 * @return ...
-	 * 		| if(getWorld() == null) then result == false
-	 *		|for(int pixelX = super.getOrigin().getX(); pixelX < super.getOrigin().getX()+super.getRectangle().getDimension().getWidth(); pixelX++)
-	 *		|	for(int pixelY= super.getOrigin().getY(); pixelY < super.getOrigin().getY()+super.getRectangle().getDimension().getHeight(); pixelY++)
-	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER) then result == true
-	 *		|result == false
-	 *
-	 */
-	@Basic
-	public boolean swimsInWater() {
-		if(getWorld() == null) {return false;}
-		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth()-1; pixelX++) {
-			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight()-1; pixelY++) {
-				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER) return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * This method returns whether the shark must fall or not
-	 * 
-	 * @return ...
-	 * 		| if(getWorld() == null || super.kinematics.getVerticalVelocity() > 0) then result == false 
-	 *		| 	Rectangle up = super.getUp() && down = super.getDownBorder()
-	 *		| 	for(int pixelX= rect.getOrigin().getX(); pixelX < rect.getOrigin().getX()+ rect.getDimension().getWidth(); pixelX++) 
-	 *		|		if(getWorld().getTileFeature(pixelX, rect.getOrigin().getY()) == Feature.WATER) then result == false
-	 *		| 	for(int pixelX = down.getOrigin().getX(); pixelX < down.getOrigin().getX()+down.getDimension().getWidth(); pixelX++)
-	 *		|		if(!getWorld().getTileFeature(pixelX, down.getOrigin().getY()).isPassable()) then result == false
-	 *		| result == super.overlappingGameObject(down).isEmpty()
-	 */
-	private boolean mustFall() {
-		if(getWorld() == null || kinematics.getYVelocity() > 0) return false; 
-		Rectangle up = super.getUpBorder();
-		for(int pixelX = up.getOrigin().getX(); pixelX < up.getOrigin().getX()+ up.getWidth(); pixelX++) {
-			if(getWorld().getTileFeature(pixelX, up.getOrigin().getY()) == Feature.WATER) return false;
-		}
-		Rectangle down = super.getDownBorder();
-		for(int pixelX = down.getOrigin().getX(); pixelX < down.getOrigin().getX()+down.getWidth(); pixelX++) {
-			if(!getWorld().getTileFeature(pixelX, down.getOrigin().getY()).isPassable()) return false;
-		}
-		return super.overlappingGameObject(down).isEmpty();
-	}
-	
-	public void arrangeMazubHit(double dt) {
-		if(getBlockTime() == 0) updateHitPoints((int) Constant.SHARK_MAZUB.getValue());
-		setBlockTime(getBlockTime() + dt);
-		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
-			setBlockTime(0.0);
-		}
-	}
-	
-	public void arrangeSlimeHit(double dt) {
-		if(getBlockTime() == 0) updateHitPoints((int) Constant.SHARK_SLIME.getValue());
-		setBlockTime(getBlockTime() + dt);
-		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
-			setBlockTime(0.0);
-		}
+		kinematics.setXVelocityBounds(0.0, 0.0);
+		kinematics.setXAcceleration(0.0);
 	}
 
 	@Override
-	protected void arrangeInitialMovement() {
-		if(getMoveTime() == 0 &&  getRestTime() == 0) {
-			super.setSprite(1); kinematics.setYAcceleration(Y_ACC);
-			if(getWorld() == null || (!super.getWorld().shallBePassable(getDownBorder()) || swimsInWater())) 
-				kinematics.setYVelocity(Y_VEL); else kinematics.setYVelocity(0.0);
-		}
-		if(mustFall()) kinematics.setYAcceleration(Y_ACC);
+	public void startRunLeft() {
+		assert(!isMoving() && !isDead() && canStartRunLeft());
+		kinematics.setXVelocity( -1.0);
+		kinematics.setXVelocityBounds(-1.0, -3.0);
+		kinematics.setXAcceleration(-0.9);
 	}
 
 	@Override
-	protected boolean canMoveInCurrentState() {
-		if(isDead() || kinematics.isStationary())  return true;
-		return (isRunning() && canRun()) || (isJumping() && canJump());
+	public void endRunLeft() {
+		assert(isRunningLeft() &&  !isDead());
+		kinematics.setXVelocity(0.0);
+		kinematics.setXVelocityBounds(0.0, 0.0);
+		kinematics.setXAcceleration(0.0);
 	}
 
 	@Override
-	protected void setNewState() {
-		// TODO Auto-generated method stub
-		if(isRunning()) endRun();
-		if(isJumping()) endJump();
+	public void run(double deltaT) {
+		super.updateHorizontalComponent(this.getPosition().getX() + (kinematics.getXVelocity()*deltaT)+ (kinematics.getXAcceleration()*deltaT*deltaT/2));
+		kinematics.updateXVelocity(deltaT);
 	}
 	
 }

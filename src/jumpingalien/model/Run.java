@@ -1,13 +1,43 @@
 package jumpingalien.model;
 
-import be.kuleuven.cs.som.annotate.Raw;
-
 public interface Run {
 
-	@Raw
-	public void run(double deltaT);
+	boolean canStartRunRight();
 	
-	@Raw
-	public void endRun();
+	boolean canRunRight();
+	
+	boolean isRunningRight();
+	
+	boolean canStartRunLeft();
+	
+	boolean canRunLeft();
+	
+	boolean isRunningLeft();
+	
+	default boolean isMoving() {
+		return isRunningRight() || isRunningLeft();
+	}
+	
+	default boolean canRunInCurrentState() {
+		if(isRunningLeft()) return canRunLeft();
+		if(isRunningRight()) return canRunRight();
+		return true;
+	}
+	
+	void startRunRight();
+	
+	void endRunRight();
+	
+	void startRunLeft();
+	
+	void endRunLeft();
+	
+	default void endRun() {
+		if(!isMoving()) throw new AssertionError();
+		if(isRunningRight()) endRunRight();
+		if(isRunningLeft()) endRunLeft();
+	}
+	
+	void run(double deltaT);
 
 }

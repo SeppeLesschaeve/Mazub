@@ -3,7 +3,6 @@ package jumpingalien.model;
 import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.Basic;
-import be.kuleuven.cs.som.annotate.Raw;
 import jumpingalien.util.Sprite;
 
 /**
@@ -17,13 +16,12 @@ import jumpingalien.util.Sprite;
  * @version 1.0
  *
  */
-public class Spider extends Organism implements Run, Jump{
+public class Spider extends Creature implements TwoDimensionMovable{
 
-	private int legs;
 	private double featureTime;
-	private double time;
-	private static final double JUMP_ACC = 0.5;
-	private static final double JUMP_VEL = 1.0;
+	private double mazubTime;
+	private double slimeTime;
+	private double sharkTime;
 	
 	/**
 	 * 
@@ -46,10 +44,9 @@ public class Spider extends Organism implements Run, Jump{
 	 * @post ...
 	 * 		| this.legs = new Legs(0, nbLegs)
 	 */
-	public Spider(int nbLegs, int pixelLeftX, int pixelBottomY, Sprite... sprites) throws IllegalArgumentException{
-		super(pixelLeftX, pixelBottomY, 0, 0, 0, sprites);
+	public Spider(int nbLegs, int pixelLeftX, int pixelBottomY, Sprite... sprites){
+		super(pixelLeftX, pixelBottomY, nbLegs, 2, nbLegs, sprites);
 		if(sprites.length != 3 || nbLegs < 0) throw new IllegalArgumentException();
-		this.legs = nbLegs;
 	}
 	
 	/**
@@ -59,7 +56,7 @@ public class Spider extends Organism implements Run, Jump{
 	 * 		| result == legs.getLegs()
 	 */
 	public int getLegs() {
-		return Integer.valueOf(legs);
+		return super.getPoints();
 	}
 	
 	/**
@@ -72,7 +69,7 @@ public class Spider extends Organism implements Run, Jump{
 	 * 		| this.legs.setLegs(legs)
 	 */
 	public void setLegs(int legs) {
-		this.legs = legs;
+		super.updateHitPoints(legs);
 	}
 	
 	/**
@@ -98,296 +95,128 @@ public class Spider extends Organism implements Run, Jump{
 	 */
 	private void setFeatureTime(double featureTime) {
 		this.featureTime = featureTime;
+		if(featureTime >= 0.6) this.featureTime = 0.0;
+	}
+
+	public double getMazubTime() {
+		return mazubTime;
+	}
+
+	public void setMazubTime(double mazubTime) {
+		this.mazubTime = mazubTime;
+		if(this.mazubTime >= Constant.TIMEOUT.getValue()) this.mazubTime = 0.0;
+	}
+
+	public double getSlimeTime() {
+		return slimeTime;
+	}
+
+	public void setSlimeTime(double slimeTime) {
+		this.slimeTime = slimeTime;
+		if(this.slimeTime >= 0.5) this.slimeTime = 0.0;
+	}
+
+	public double getSharkTime() {
+		return sharkTime;
+	}
+
+	public void setSharkTime(double sharkTime) {
+		this.sharkTime = sharkTime;
+		if(this.sharkTime >= Constant.TIMEOUT.getValue()) this.sharkTime = 0.0;
 	}
 
 	/**
-	 * This method is used to manage to vertical movement of the spider over interval deltaT
+	 * This method is used to indicate whether the spider is considered dead
 	 * 
-	 * @param deltaT
-	 * 			This parameter is used as interval
-	 * 
-	 * @post ...
-	 * 		|if(kinematics.getVerticalVelocity() > 0) then 
-	 * 		| 	super.getVelocity().setMaxY(JUMP_VEL + 0.25*getLegs()) && setSprite(1)
-	 *		|else if(kinematics.getVerticalVelocity() < 0) then  
-	 *		|	super.getVelocity().setMaxY(-(JUMP_VEL + 0.25*getLegs())) && setSprite(2)
-	 *@post ...
-	 *		| double newY = this.getPosition().getY() + (kinematics.getVerticalVelocity()*deltaT) + (acceleration.getY()*deltaT*deltaT/2)
-	 *		| super.getVelocity().accelerateY(getAcceleration(), deltaT)
-	 *		| super.getPosition().setY(newY) && super.getOrigin().setY((int)(newY/0.01))
-	 *
+	 * @return ...
+	 * 		| result == getLegs() < 2
 	 */
-	@Override @Raw
-	public void jump(double deltaT){
-		if(kinematics.getYVelocity() > 0) { 
-			kinematics.setYVelocity(JUMP_VEL + 0.25*getLegs());
-			setSprite(1);
-		}else if(kinematics.getYVelocity() < 0){ 
-			kinematics.setYVelocity(-(JUMP_VEL + 0.25*getLegs()));
-			setSprite(2);
-		}
-		kinematics.updateYVelocity(deltaT);
-		super.updateVerticalComponent(this.getPosition().getY() + (kinematics.getYVelocity()*deltaT) + (kinematics.getYAcceleration()*deltaT*deltaT/2));
+	@Override
+	public boolean isDead() {
+		return getLegs() < 2;
 	}
 
-	/**
-	 * This method is used to end the vertical movement and to set ready for another movement
-	 * 
-	 * @param deltaT
-	 * 			This parameter is unused but must be implemented from interface Jump
-	 * 
-	 * @post ...
-	 * 		|if(kinematics.getVerticalVelocity() > 0) then 
-	 *		|		getVelocity().setY(-kinematics.getVerticalVelocity()) && getAcceleration().setY(-JUMP_ACC)
-	 *		|		&& setSprite(2)
-	 *		|else if(kinematics.getVerticalVelocity() < 0) then 
-	 *		|		getVelocity().setY(-kinematics.getVerticalVelocity()) && getAcceleration().setY(JUMP_ACC)
-	 *		|		&& setSprite(1)
-	 * 
-	 */
-	@Raw
-	public void endJump(){
-		if(kinematics.getYVelocity() > 0) { 
-			
-			kinematics.setYAcceleration(-JUMP_ACC);
-			setSprite(2);
-		}else if(kinematics.getYVelocity() < 0){
-			kinematics.setYAcceleration(JUMP_ACC);
-			setSprite(1);
-		}
-		kinematics.setYVelocity(-kinematics.getYVelocity()); 
+
+	protected void arrangeInitialMovement() {
+		if(kinematics.getYAcceleration() == 0.0 && canStartJump()) startJump();
+		else if(kinematics.getYAcceleration() == 0.0 && canStartFall()) startFall();
+		else if(kinematics.getXAcceleration() == 0.0 && canStartRunLeft()) startRunLeft();
+		else if(kinematics.getXAcceleration() == 0.0 && canStartRunRight()) startRunRight();	
 	}
 
-	/**
-	 * This method returns whether the spider can jump or not
-	 * 
-	 * @return ...
-	 * 		| result == ( getWorld() == null || ( super.overlappingGameObject(getUpBorder()).isEmpty() 
-	 *		|	&& super.getWorld().shallBePassable(getUpBorder()) && isAbleToJump()) )
-	 *
-	 */
-	public boolean canJump() {
-		return getWorld() == null || ( super.overlappingGameObject(getUpBorder()).isEmpty() 
-				&& super.getWorld().shallBePassable(getUpBorder()) && isAbleToJump());
+	@Override
+	protected boolean canMoveInCurrentState() {
+		if(kinematics.isStationary()) return canStartJump() || canStartRunLeft();
+		return canJumpInCurrentState() && canRunInCurrentState();
+	}
+	
+	@Override
+	protected void setNewState() {
+		if(kinematics.isStationary() && canStartFall()) startFall();
+		if(kinematics.isStationary() && canStartRunRight()) startRunRight();
+		if(isMoving()) endRun();
+		if(isJumping()) endJump();
 	}
 	
 	/**
-	 * This method returns whether the spider can fall or not
+	 * This method is used to indicate whether the spider is in contact with water or ice
 	 * 
 	 * @return ...
-	 * 		| result == ( getWorld() == null || ( super.overlappingGameObject(getDownBorder()).isEmpty() 
-	 *		|	&& super.getWorld().shallBePassable(getDown()) && isAbleToJump()) )
-	 *
+	 * 		| if(getWorld() == null) then result == false
+	 * 		   ...
+	 * 		|for(int pixelX = super.getOrigin().getX() - 1; pixelX <= super.getOrigin().getX()+super.getRectangle().getDimension().getWidth(); pixelX++) 
+	 *		|	for(int pixelY= super.getOrigin().getY() - 1; pixelY <= super.getOrigin().getY()+super.getRectangle().getDimension().getHeight(); pixelY++)
+	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER || getWorld().getTileFeature(pixelX, pixelY) == Feature.ICE) 
+	 *		|			then result == true
+	 * 		   ...
+	 * 		| result == false
 	 */
-	public boolean canFall() {
-		return getWorld() == null || ( super.overlappingGameObject(getDownBorder()).isEmpty() 
-				&& super.getWorld().shallBePassable(getDownBorder()) && isAbleToJump());
-	}
-	
-	/**
-	 * This method is used to indicate whether the spider is jumping or not
-	 * 
-	 *@return ...
-	 *		| result == super.kinematics.getVerticalVelocity() > 0
-	 */
-	public boolean isJumping() {
-		return kinematics.getYVelocity() > 0;
-	}
-	
-	/**
-	 * This method is used to indicate whether the spider is falling or not
-	 * 
-	 * @return ...
-	 * 		| result == super.kinematics.getVerticalVelocity() <= 0 && getAcceleration().getY() != 0
-	 */
-	public boolean isFalling() {
-		return kinematics.getYVelocity() <= 0 && kinematics.getYAcceleration() != 0;
-	}
-	
-	/**
-	 * This method is used to indicate whether the spider is able to jump; 
-	 * this is the main condition for the jumping movement
-	 *  
-	 * @return ...
-	 * 		| result == (!super.getWorld().shallBePassable(getLeftBorder()) || !super.getWorld().shallBePassable(getRightBorder()))
-	 */
-	public boolean isAbleToJump() {
-		return (!super.getWorld().shallBePassable(getLeftBorder()) || !super.getWorld().shallBePassable(getRightBorder()));
-	}
-
-	/**
-	 * This method is used to make the horizontal movement of the spider over interval deltaT
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as interval
-	 * 
-	 * @post ...
-	 * 		|double newX = this.getPosition().getX() + super.kinematics.getHorizontalVelocity()*deltaT
-	 *		|super.getPosition().setX(newX) && super.getOrigin().setX((int)(newX/0.01))
-	 *
-	 */
-	@Override @Raw
-	public void run(double deltaT) {
-		double newX = this.getPosition().getX() + super.kinematics.getXVelocity()*deltaT;
-		super.updateHorizontalComponent(newX);
-	}
-
-	/**
-	 * This method is used to end the horizontal movement and to set ready for another movement
-	 * 
-	 * @param deltaT
-	 * 			This parameter is unused but must be implemented from interface Run
-	 * 
-	 * @post ...
-	 * 		|if(super.kinematics.getHorizontalVelocity() > 0) then super.getVelocity().setX(getLegs()*-0.15)
-	 *		|else if(super.kinematics.getHorizontalVelocity() < 0) then super.getVelocity().setX(getLegs()*0.15)
-	 * 
-	 */
-	public void endRun() {
-		if(kinematics.getXVelocity() > 0) kinematics.setXVelocity(getLegs()*-0.15);
-		else if(kinematics.getXVelocity() < 0) kinematics.setXVelocity(getLegs()*0.15);
-	}
-	
-	/**
-	 * This method returns whether the spider can run or not
-	 * 
-	 * @return ...
-	 * 		| if(getWorld() == null) then result == true
-	 *         ...
-	 *      | if(getOrientation() == Orientation.NEGATIVE.getValue()) then 
-	 *		|	result == super.overlappingGameObject(getLeftBorder()).isEmpty()
-	 *		|		&& super.getWorld().shallBePassable(getLeftBorder()) && isAbleToRun()
-	 *		   ...
-	 *		| if(getOrientation() == Orientation.POSITIVE.getValue()) then
-	 *		|	result == super.overlappingGameObject(getRightBorder()).isEmpty() 
-	 *		|		&& super.getWorld().shallBePassable(getRightBorder()) && isAbleToRun()
-	 *			...
-	 *		| result == false
-	 */
-	public boolean canRun() {
-		if(getWorld() == null) return true;
-		if(getOrientation() == -1) {
-			return super.overlappingGameObject(getLeftBorder()).isEmpty()
-					&& super.getWorld().shallBePassable(getLeftBorder()) && isAbleToRun();
-		}
-		if(getOrientation() == 1) {
-			return super.overlappingGameObject(getRightBorder()).isEmpty() 
-					&& super.getWorld().shallBePassable(getRightBorder()) && isAbleToRun();
+	@Basic
+	public boolean isInContactWithWaterOrIce() {
+		if(getWorld() == null) {return false;}
+		int tileLength = super.getWorld().getTileLength();
+		int newX = 0;
+		int newY = 0;
+		for(int pixelX = super.getRectangle().getX(); pixelX < super.getRectangle().getX()+super.getRectangle().getWidth()-1; pixelX+=newX) {
+			for(int pixelY= super.getRectangle().getY(); pixelY < super.getRectangle().getY()+super.getRectangle().getHeight()-1; pixelY+=newY) {
+				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER || getWorld().getTileFeature(pixelX, pixelY) == Feature.ICE) return true;
+				newY = Math.min(tileLength, super.getRectangle().getY() + super.getRectangle().getHeight()-1 - pixelY);
+				if(newY < tileLength) newY=1;
+			}
+			newX = Math.min(tileLength, super.getRectangle().getX() + super.getRectangle().getWidth()-1 - pixelX);
+			if(newX < tileLength) newX=1;
 		}
 		return false;
 	}
-
-
+	
 	/**
-	 * This method is used to indicate whether the spider is able to jump; 
-	 * this is the main condition for the jumping movement
-	 *  
+	 * This method is used to indicate whether the spider is in contact with magma
+	 * 
 	 * @return ...
-	 * 		| result == (!super.getWorld().shallBePassable(getLeftBorder()) || !super.getWorld().shallBePassable(getRightBorder()))
+	 * 		| if(getWorld() == null) then result == false
+	 * 		   ...
+	 * 		|for(int pixelX = super.getOrigin().getX() - 1; pixelX <= super.getOrigin().getX()+super.getRectangle().getDimension().getWidth(); pixelX++) 
+	 *		|	for(int pixelY= super.getOrigin().getY() - 1; pixelY <= super.getOrigin().getY()+super.getRectangle().getDimension().getHeight(); pixelY++)
+	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) then result == true
+	 * 		   ...
+	 * 		| result == false
 	 */
-	public boolean isAbleToRun() {
-		return (!super.getWorld().shallBePassable(getDownBorder()) || !super.getWorld().shallBePassable(getUpBorder()));
-	}
-
-	/**
-	 * This method is used to advance the state of the spider over interval deltaT
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as interval
-	 * 
-	 * @throws IllegalArgumentException
-	 * 		...
-	 * 		|Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)
-	 * @post ...
-	 * 		|if(getAcceleration().getY() == 0.0 && isAbleToJump()) then
-	 *		|	getVelocity().setY(JUMP_VEL) && getAcceleration().setY(JUMP_ACC)
-	 *		|if(kinematics.getHorizontalVelocity() == 0.0 && isAbleToRun()) then getVelocity().setX(-(0.15*getLegs()))
-	 * @post ...
-	 * 		|for(double time = 0.0, dt = updateDt(deltaT, time); time < deltaT; time += dt, dt = updateDt(deltaT, time))
-	 *		|	if(isDead()) then super.setDelay(getDelay() + dt) 
-	 *		|	if(getDelay() >= REMOVE_DELAY) then terminate()
-	 *		|	arrangeFeatureHit(dt)
-	 *		|	arrangeObjectHit(dt)
-	 *		|	arrangeMovement(dt)
-	 *		|	setBorders()
-	 */
-	@Override
-	public void advanceTime(double deltaT) throws IllegalArgumentException{
-		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
-		arrangeInitialMovement();
-		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
-		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
-			if(isDead()) super.setDelay(getDelay() + dt); 
-			if(getDelay() >= Constant.REMOVE_DELAY.getValue()) terminate();
-			arrangeFeatureHit(dt);
-			arrangeObjectHit(dt);
-			arrangeMovement(dt);
-			time += dt;
-		}	
-	}
-
-	protected void arrangeInitialMovement() {
-		if(kinematics.getYAcceleration() == 0.0 && isAbleToJump()) {
-			kinematics.setYVelocity(JUMP_VEL); 
-			kinematics.setYAcceleration(JUMP_ACC);
-		}
-		if(kinematics.getXVelocity() == 0.0 && isAbleToRun()) kinematics.setXVelocity(-(0.15*getLegs()));
-	}
-
-	/**
-	 * This method is used to arrange the movements of the spider over interval dt
-	 * 
-	 * @param dt
-	 * 			This parameter is used as interval
-	 * 
-	 * @post ...
-	 * 	   	| if( isDead() ) then return
-	 * @post ...
-	 * 		| if((isJumping() && canJump()) || (isFalling() && canFall())) then jump(dt) else endJump(dt)
-	 *		| if(isRunning() && canRun()) then run(dt) else endRun(dt)
-	 *		| if(!super.isInside()) terminate()
-	 */
-	private void arrangeMovement(double dt) {
-		if( isDead() ) return;
-		if((isJumping() && canJump()) || (isFalling() && canFall())) jump(dt); else endJump();
-		if(isRunning() && canRun()) run(dt); else endRun();
-		if(!super.isInside()) terminate();
-	}
-
-	/**
-	 * This method is used to arrange the Hit Points because of hit with objects using dt as time
-	 * 
-	 * @param dt
-	 * 			This parameter is used as time
-	 * 
-	 * @post ...
-	 * 		| Set<GameObject> objects = getCollidingObjects()
-	 *		| if(getWorld() != null) 
-	 *		|	for(GameObject object: objects) 
-	 *		|		if(object instanceof Spider && object.getBlockTime() == 0) 
-	 *		|			then if(isRunning()) then endRun(dt)
-	 *		|			and then if(isJumping() || isFalling()) then endJump(dt)
-	 *		|		else getWorld().handleImpact(this, object, dt)
-	 *
-	 */
-	private void arrangeObjectHit(double dt) {
-		Set<Organism> objects = getCollidingObjects();
-		if(getWorld() != null) {
-			for(Organism object: objects) {
-				int type = getGameObjectType(object);
-				switch(type) {
-				case 0:arrangeMazubHit(dt);break;
-				case 3:arrangeSlimeHit(dt);break;
-				case 4:arrangeSharkHit(dt);break;
-				case 5:
-					if(object instanceof Spider && object.getBlockTime() == 0) {
-						if(isRunning()) endRun();
-						if(isJumping() || isFalling()) endJump();
-					}break;
-				default: break;
-				}
+	@Basic
+	public boolean isInContactWithMagma() {
+		if(getWorld() == null) {return false;}
+		int tileLength = super.getWorld().getTileLength();
+		int newX = 0;
+		int newY = 0;
+		for(int pixelX = super.getRectangle().getX(); pixelX < super.getRectangle().getX()+super.getRectangle().getWidth()-1; pixelX+=newX) {
+			for(int pixelY= super.getRectangle().getY(); pixelY < super.getRectangle().getY()+super.getRectangle().getHeight()-1; pixelY+=newY) {
+				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) return true;
+				newY = Math.min(tileLength, super.getRectangle().getY() + super.getRectangle().getHeight()-1 - pixelY);
+				if(newY < tileLength) newY=1;
 			}
+			newX = Math.min(tileLength, super.getRectangle().getX() + super.getRectangle().getWidth()-1 - pixelX);
+			if(newX < tileLength) newX=1;
 		}
+		return false;
 	}
 
 	/**
@@ -407,170 +236,255 @@ public class Spider extends Organism implements Run, Jump{
 	 *		|else setFeatureTime(0.0)
 	 *
 	 */
-	private void arrangeFeatureHit(double dt) {
-		if(isInContactWithWaterOrIce()) setLegs(0);
+	protected void arrangeFeatureHit(double dt) {
+		if(isInContactWithWaterOrIce()) setLegs(-getLegs());
 		if(isInContactWithMagma()) {
 			if(getFeatureTime() == 0.0) {
-				setLegs(getLegs() - 2);
+				setLegs(-2);
 			}
 			setFeatureTime(getFeatureTime() + dt);
-			if(getFeatureTime() >= 0.6) {
-				setLegs(getLegs() - 2); 
-				setFeatureTime(0.0);
-			}
 		}else setFeatureTime(0.0);
 	}
 	
 	/**
-	 * This method is used to indicate whether the spider is in contact with water or ice
+	 * This method is used to arrange the Hit Points because of hit with objects using dt as time
 	 * 
-	 * @return ...
-	 * 		| if(getWorld() == null) then result == false
-	 * 		   ...
-	 * 		|for(int pixelX = super.getOrigin().getX() - 1; pixelX <= super.getOrigin().getX()+super.getRectangle().getDimension().getWidth(); pixelX++) 
-	 *		|	for(int pixelY= super.getOrigin().getY() - 1; pixelY <= super.getOrigin().getY()+super.getRectangle().getDimension().getHeight(); pixelY++)
-	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER || getWorld().getTileFeature(pixelX, pixelY) == Feature.ICE) 
-	 *		|			then result == true
-	 * 		   ...
-	 * 		| result == false
-	 */
-	@Basic
-	public boolean isInContactWithWaterOrIce() {
-		if(getWorld() == null) {return false;}
-		for(int pixelX = super.getRectangle().getXCoordinate() - 1; pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth(); pixelX++) {
-			for(int pixelY= super.getRectangle().getYCoordinate() - 1; pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight(); pixelY++) {
-				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.WATER || getWorld().getTileFeature(pixelX, pixelY) == Feature.ICE) return true;
-			}
-		}
-		return false;
-	}
-
-
-	/**
-	 * This method is used to indicate whether the spider is in contact with magma
-	 * 
-	 * @return ...
-	 * 		| if(getWorld() == null) then result == false
-	 * 		   ...
-	 * 		|for(int pixelX = super.getOrigin().getX() - 1; pixelX <= super.getOrigin().getX()+super.getRectangle().getDimension().getWidth(); pixelX++) 
-	 *		|	for(int pixelY= super.getOrigin().getY() - 1; pixelY <= super.getOrigin().getY()+super.getRectangle().getDimension().getHeight(); pixelY++)
-	 *		|		if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) then result == true
-	 * 		   ...
-	 * 		| result == false
-	 */
-	@Basic
-	public boolean isInContactWithMagma() {
-		if(getWorld() == null) {return false;}
-		for(int pixelX = super.getRectangle().getXCoordinate(); pixelX <= super.getRectangle().getXCoordinate()+super.getRectangle().getWidth(); pixelX++) {
-			for(int pixelY= super.getRectangle().getYCoordinate(); pixelY <= super.getRectangle().getYCoordinate()+super.getRectangle().getHeight(); pixelY++) {
-				if(getWorld().getTileFeature(pixelX, pixelY) == Feature.MAGMA) return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * This method is used to indicate whether the spider is considered dead
-	 * 
-	 * @return ...
-	 * 		| result == getLegs() < 2
-	 */
-	@Override
-	public boolean isDead() {
-		return getLegs() < 2;
-	}
-
-	/**@Basic
-	public Position<Double> getPosition() {
-		return position;
-	}
-	
-	
-	 * This method returns the orientation of the spider
-	 * 
-	 * @return ...
-	 * 		| if(super.kinematics.getVerticalVelocity() < 0 || super.kinematics.getHorizontalVelocity() < 0) then
-	 *		|	result == Orientation.NEGATIVE.getValue()
-	 * 		   ...
-	 * 		| if(super.kinematics.getVerticalVelocity() > 0 || super.kinematics.getHorizontalVelocity() > 0) then
-	 *		| 	result == Orientation.POSITIVE.getValue()
-	 */
-	@Override
-	public int getOrientation() {
-		if(kinematics.getYVelocity() < 0 || kinematics.getXVelocity() < 0) return -1;
-		else if(kinematics.getYVelocity() > 0 || kinematics.getXVelocity() > 0) return 1;
-		else return 0;
-	}
-
-	/**
-	 * This method is used to return a new time slice for the advancement of the state of the spider
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as the time that must be passed in total
-	 * @param time
-	 * 			This parameter is used as the time that has already been passed
+	 * @param dt
+	 * 			This parameter is used as time
 	 * 
 	 * @post ...
-	 * 		|double result =  0.01 / ( Math.sqrt( Math.pow(kinematics.getHorizontalVelocity(), 2) + Math.pow(kinematics.getVerticalVelocity(), 2) ) + 
-			|	( Math.sqrt(deltaT) * Math.pow(acceleration.getY(), 2) ))
-	 * @post ...
-	 * 		|if(Double.isInfinite(result) || result > 0.01) then result = 0.01
-	 * 		|if(time + result > deltaT) then result = deltaT-time
-	 *		|result.equals(result)
-	 *	
+	 * 		| Set<GameObject> objects = getCollidingObjects()
+	 *		| if(getWorld() != null) 
+	 *		|	for(GameObject object: objects) 
+	 *		|		if(object instanceof Spider && object.getBlockTime() == 0) 
+	 *		|			then if(isRunning()) then endRun(dt)
+	 *		|			and then if(isJumping() || isFalling()) then endJump(dt)
+	 *		|		else getWorld().handleImpact(this, object, dt)
+	 *
 	 */
-	protected double updateDt(double deltaT, double time) {
-		double result = 0.01 / ( Math.sqrt( Math.pow(kinematics.getXVelocity(), 2) + Math.pow(kinematics.getYVelocity(), 2) ) + 
-				( Math.sqrt(deltaT) * Math.pow(kinematics.getYAcceleration(), 2) ));
-		if(Double.isInfinite(result) || result > 0.01) {
-			result = 0.01;
+	protected void arrangeObjectHit(double dt) {
+		Set<Organism> objects = getCollidingCreatures();
+		if(mazubTime != 0) setMazubTime(mazubTime + dt);
+		if(slimeTime != 0) setSlimeTime(slimeTime + dt);
+		if(sharkTime != 0) setSharkTime(sharkTime + dt);
+		if(getWorld() != null) {
+			for(Organism object: objects) {
+				int type = getGameObjectType(object);
+				switch(type) {
+				case 0:arrangeMazubHit(dt);break;
+				case 3:arrangeSlimeHit(dt);break;
+				case 4:arrangeSharkHit(dt);break;
+				case 5:arrangeSwitch((Spider) object); break;
+				default: break;
+				}
+			}
 		}
-		if(time + result > deltaT) {
-			result = deltaT-time;
-		}
-		return result;
-	}
-
-	public double getTime() {
-		return time;
-	}
-
-	public void setTime(double time) {
-		this.time = time;
 	}
 	
 	public void arrangeMazubHit(double dt) {
-		setLegs(getLegs() - 1);
-		if(isRunning()) {
-			kinematics.setXVelocity(0);
-		}
-		if(isJumping() || isFalling()) {
-			kinematics.setYAcceleration(0);
-			kinematics.setYVelocity(0);
+		if(mazubTime == 0) {
+			setLegs(-1);
+			setMazubTime(mazubTime + dt);
 		}
 	}
 
 	public void arrangeSlimeHit(double dt) {
-		setTime(getTime() + dt);
-		if(getTime() >= 0.5) {
-			setLegs(getLegs() + 1);
-			setTime(0.0);
+		if(slimeTime == 0) {
+			setLegs(+1);
+			setSlimeTime(slimeTime + dt);
 		}
 	}
 
 	public void arrangeSharkHit(double dt) {
-		if(getBlockTime() == 0)setLegs(getLegs()/2);
-		setBlockTime(getBlockTime() + dt);
-		if(getBlockTime() >= Constant.TIMEOUT.getValue()) {
-			setBlockTime(0.0);
-		}
-		if(isRunning()) {
-			kinematics.setXVelocity(0);
-		}
-		if(isJumping() || isFalling()) {
-			kinematics.setYAcceleration(0);
-			kinematics.setYVelocity(0);
+		if(sharkTime == 0) {
+			setLegs(-(getLegs()/2));
+			setSharkTime(sharkTime + dt);
 		}
 	}
+
+	private void arrangeSwitch(Spider spider) {
+		if(spider.isMoving()) {
+			if(spider.isRunningRight()) {
+				spider.startRunLeft(); 
+				startRunRight();
+			}else {
+				startRunLeft(); 
+				spider.startRunRight();
+			}
+		}
+		if(spider.isJumping()){
+			if(spider.isGoingUp()) {
+				spider.startFall(); 
+				startJump();
+			}else {
+				startFall(); 
+				spider.startJump();
+			}
+		}
+	}
+	/**
+	 * This method is used to arrange the movements of the spider over interval dt
+	 * 
+	 * @param dt
+	 * 			This parameter is used as interval
+	 * 
+	 * @post ...
+	 * 	   	| if( isDead() ) then return
+	 * @post ...
+	 * 		| if((isJumping() && canJump()) || (isFalling() && canFall())) then jump(dt) else endJump(dt)
+	 *		| if(isRunning() && canRun()) then run(dt) else endRun(dt)
+	 *		| if(!super.isInside()) terminate()
+	 */
+	protected void arrangeMovement(double dt) {
+		if(kinematics.isStationary()) arrangeInitialMovement();
+		if(isJumping()) jump(dt);
+		if(isMoving()) run(dt);
+		if(!super.isInside()) terminate();
+	}
+
+	@Override
+	public boolean canStartJump() {
+		return canJump();
+	}
+
+	@Override
+	public boolean canJump() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return getCollidingCreatures(getUpBorder()).isEmpty() && super.getWorld().shallBePassable(getUpBorder()) 
+				&& (!super.getWorld().shallBePassable(getLeftBorder()) || !super.getWorld().shallBePassable(getRightBorder()));
+	}
+
+	@Override
+	public boolean isGoingUp() {
+		return kinematics.getYVelocity() > 0 && kinematics.getYAcceleration() < 0;
+	}
+
+	@Override
+	public boolean canStartFall() {
+		return canFall();
+	}
+
+	@Override
+	public boolean canFall() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return getCollidingCreatures(getDownBorder()).isEmpty() && super.getWorld().shallBePassable(getDownBorder()) 
+				&& (!super.getWorld().shallBePassable(getLeftBorder()) || !super.getWorld().shallBePassable(getRightBorder()));
+	}
+
+	@Override
+	public boolean isGoingDown() {
+		return kinematics.getYVelocity() < 0 || kinematics.getYAcceleration() < 0;
+	}
+
+	@Override
+	public void startJump() {
+		if(isJumping() || isDead()) throw new IllegalStateException("Spider can not start jumping if he did jump before it.");
+		super.setSprite(1);
+		kinematics.setYVelocity(1.0);
+		kinematics.setYAcceleration(0.5);
+		kinematics.setMaxYVelocity(1.0 +0.5*0.5*getLegs());
+	}
+
+	@Override
+	public void endGoingUp() {
+		startFall();
+	}
+
+	@Override
+	public void startFall() {
+		if(isJumping() || isDead()) throw new IllegalStateException("Spider can not start jumping if he did jump before it.");
+		super.setSprite(2);
+		kinematics.setYVelocity(1.0);
+		kinematics.setYAcceleration(-0.5);
+		kinematics.setMaxYVelocity(-1.0-(0.5*0.5)*getLegs());
+	}
+
+	@Override
+	public void endGoingDown() {
+		startJump();
+	}
+
+	@Override
+	public void jump(double deltaT) {
+		super.updateVerticalComponent(this.getPosition().getY() + (kinematics.getYVelocity()*deltaT) + 
+				(kinematics.getYAcceleration()*deltaT*deltaT/2));
+		kinematics.updateYVelocity(deltaT);
+	}
+
+	@Override
+	public boolean canStartRunRight() {
+		return canRunRight();
+	}
+
+	@Override
+	public boolean canRunRight() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return getCollidingCreatures(getRightBorder()).isEmpty() && super.getWorld().shallBePassable(getRightBorder())
+				&& (!super.getWorld().shallBePassable(getUpBorder()) || !super.getWorld().shallBePassable(getDownBorder()));
+	}
+
+	@Override
+	public boolean isRunningRight() {
+		return kinematics.getXVelocity() > 0 || kinematics.getXAcceleration() > 0;
+	}
+
+	@Override
+	public boolean canStartRunLeft() {
+		return canRunLeft();
+	}
+
+	@Override
+	public boolean canRunLeft() {
+		if(isTerminated()) return false;
+		if(isStillNotInAGameWorld()) return true;
+		return getCollidingCreatures(getLeftBorder()).isEmpty() && super.getWorld().shallBePassable(getLeftBorder()) &&
+				(!super.getWorld().shallBePassable(getUpBorder()) || !super.getWorld().shallBePassable(getDownBorder()));
+	}
+
+	@Override
+	public boolean isRunningLeft() {
+		return kinematics.getXVelocity() < 0 || kinematics.getXAcceleration() < 0;
+	}
+
+	@Override
+	public void startRunRight() {
+		assert(!isMoving() && !isDead());
+		super.setSprite(0);
+		kinematics.setXAcceleration(0.15);
+		kinematics.setMaxXVelocity(0.15*0.15*getLegs());
+	}
+
+	@Override
+	public void endRunRight() {
+		assert(isRunningRight() && !isDead());
+		kinematics.setXAcceleration(0.0);
+		kinematics.setMaxXVelocity(0.0);
+	}
+
+	@Override
+	public void startRunLeft() {
+		assert(!isMoving() && !isDead());
+		super.setSprite(0);
+		kinematics.setXAcceleration(-0.15);
+		kinematics.setMaxXVelocity(-0.15*0.15*getLegs());
+		
+	}
+
+	@Override
+	public void endRunLeft() {
+		assert(isRunningLeft() && !isDead());
+		kinematics.setXAcceleration(0.0);
+		kinematics.setMaxXVelocity(0.0);
+	}
+
+	@Override
+	public void run(double deltaT) {
+		super.updateHorizontalComponent(this.getPosition().getX() + super.kinematics.getXVelocity()*deltaT + 
+				(kinematics.getXAcceleration()*deltaT*deltaT/2));
+		kinematics.updateXVelocity(deltaT);
+	}	
 	
 }

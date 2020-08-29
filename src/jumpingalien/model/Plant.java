@@ -11,14 +11,10 @@ import jumpingalien.util.Sprite;
  * @author Seppe Lesschaeve (Informatica)
  *
  */
-public abstract class Plant extends Organism{
+public abstract class Plant extends Organism implements Movable{
 	
 	private double age  = 0.0;
-	private double timer = 0.0;
-	private double hitTime = 0.0;
-	
-	protected static final double SNEEZE_AGE = 10;
-	protected static final double SKULL_AGE = 12;
+	private double moveTime = 0.0;
 	
 	/**
 	 * This constructor will set the initial Pixel Position, Actual Position, HitPoint and the images to show the animation
@@ -75,8 +71,8 @@ public abstract class Plant extends Organism{
 	 * 
 	 */
 	@Basic
-	public double getTimer() {
-		return timer;
+	public double getMoveTime() {
+		return moveTime;
 	}
 
 	/**
@@ -89,51 +85,47 @@ public abstract class Plant extends Organism{
 	 * 		|(new this).timer = timer
 	 * 
 	 */
-	protected void setTimer(double timer) {
-		this.timer = timer;
+	protected void setMoveTime(double time) {
+		this.moveTime = time;
 	}
 	
 	/**
-	 * This method returns Hit Time
+	 * This method will update the situation of the Sneezewort using deltaT
 	 * 
-	 * @return ...
-	 * 		|result == hitTime
-	 * 
-	 */
-	@Basic
-	public double getHitTime() {
-		return hitTime;
-	}
-	
-	/**
-	 * This method is used to set the Hit Time
-	 * 
-	 * @param hitTime
-	 * 			This parameter is used to set the Hit Time
-	 * 
-	 * @post ...
-	 * 		|(new this).hitTime = hitTime
-	 * 
-	 */
-	protected void setHitTime(double hitTime) {
-		this.hitTime = hitTime;
-	}
-	
-	/**
-	 * This method returns is used to return whether the Plant is dead
-	 * 
-	 * @return ...
-	 * 		|if(this instanceof Sneezewort) then result == ( getHit() == 0 || getAge() >= SNEEZE_AGE)
+	 * @param deltaT
+	 * 			This parameter is used as time to be passed
+	 * @throws IllegalArgumentException
 	 * 			...
-	 * 		|if(this instanceof Skullcab) result == ( getHit() == 0 || getAge() >= SKULL_AGE)
+	 * 		|Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)
+	 * @post ...
+	 * 		|	for(double time = 0.0, dt = updateDt(deltaT, time); time < deltaT; time += dt, dt = updateDt(deltaT, time)) 
+	 *		|		this.setAge(getAge() + dt)
+	 *		|		if(getAge() < SNEEZE_AGE && getTimer() + dt > Constant.PLANT_SWITCH_TIME.getValue() && !isDead())  
+	 *		|			then arrangeOvershoot(Constant.PLANT_SWITCH_TIME.getValue() - getTimer(), dt)
+	 *		|		else if(getAge() < SNEEZE_AGE && !isDead())  then arrangeMove(dt)
+	 *		|	else 
+	 *		|		if(getWorld() != null && getWorld().getPlayer() != null) then 
+	 *		|			getWorld().handleImpact(getWorld().getPlayer(), this, deltaT)
+	 *		|		super.setDelay(dt)
+	 *@post ...
+	 *		| if(super.getDelay() >= REMOVE_DELAY || !isInside()) then terminate()
+	 * 
 	 */
 	@Override
-	public boolean isDead() {
-		if(this instanceof Sneezewort) return getPoints() == 0 || getAge() >= SNEEZE_AGE;
-		if(this instanceof Skullcab)   return getPoints() == 0 || getAge() >= SKULL_AGE;
-		return false;
+	public void advanceTime(double deltaT) throws IllegalArgumentException{
+		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) throw new IllegalArgumentException();
+		double dt = kinematics.calculateNewTimeSlice(deltaT, 0.0);
+		for(double time = 0.0; time < deltaT; dt = kinematics.calculateNewTimeSlice(deltaT, time)) {
+			if(moveTime + dt >= Constant.PLANT_SWITCH_TIME.getValue()) dt = Constant.PLANT_SWITCH_TIME.getValue() - moveTime;
+			if(!isDead()) arrangeMove(dt);
+			else super.setDelay(dt);
+			this.setAge(getAge() + dt);
+			time += dt;
+		}
+		if(super.getDelay() >= Constant.REMOVE_DELAY.getValue() || !isInside()) terminate();
 	}
 	
+	public abstract boolean isDead();
 	protected abstract void arrangeMove(double deltaT); //specification can be seen in the subclasses of this class
-	protected abstract void startMove(); //specification can be seen in the subclasses of this class
+	protected abstract void arrangeEat(double dt);
 }

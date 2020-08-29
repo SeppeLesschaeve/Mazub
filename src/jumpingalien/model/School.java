@@ -38,7 +38,7 @@ public class School{
 	 *		|if(this.getWorld() != null) then this.getWorld().setSchool(this)
 	 *
 	 */
-	public School(World world) throws IllegalStateException{
+	public School(World world){
 		if(world != null && !world.canHaveAsSchool(this)) throw new IllegalStateException();
 		this.setWorld(world);
 		if(this.getWorld() != null) {this.getWorld().setSchool(this);}
@@ -56,7 +56,8 @@ public class School{
 	@Basic
 	public Set<Slime> getSlimes(){
 		Set<Slime> school = new HashSet<>();
-		this.slimes.values().stream().forEach(slime -> school.add((Slime) slime));
+		Iterator<Slime> currentSchool = slimes.values().iterator();
+		currentSchool.forEachRemaining(slime -> school.add(slime));
 		return school;
 	}
 	
@@ -145,7 +146,7 @@ public class School{
 	 * 		| this.setWorld(null)
 	 * 
 	 */
-	private void unsetWorld() {
+	private void clearWorld() {
 		this.setWorld(null);
 	}
 	
@@ -172,8 +173,7 @@ public class School{
 	 *		|	slime.getSchool().getSlimes().contains(slime)))
 	 */
 	public boolean canHaveAsSlime(Slime slime) {
-		return !(slime.isTerminated() || (slime.getSchool() != null && slime.getSchool().getSlimes() != null &&
-				slime.getSchool().getSlimes().contains(slime)));
+		return !slime.isTerminated() && (slime.getSchool() == null || !slime.getSchool().getSlimes().contains(slime));
 	}
 
 	/**
@@ -215,7 +215,7 @@ public class School{
 	 * 
 	 */
 	@Raw
-	public void addSlime(@Raw Slime slime) throws IllegalArgumentException{
+	public void addSlime(@Raw Slime slime){
 		if(!canHaveAsSlime(slime) || slimes == null) throw new IllegalArgumentException();
 		slime.setSchool(this);
 		slimes.put(slime.getId(), slime);
@@ -235,7 +235,7 @@ public class School{
 	 *
 	 */
 	@Raw
-	public void removeSlime(@Raw Slime slime) throws IllegalArgumentException{
+	public void removeSlime(@Raw Slime slime) {
 		if(!getSlimes().contains(slime)) throw new IllegalArgumentException();
 		slime.setSchool(null);
 		this.slimes.remove(slime.getId());
@@ -251,6 +251,6 @@ public class School{
 	 */
 	public void terminate() {
 		slimes = null;
-		unsetWorld();
+		clearWorld();
 	}
 }
