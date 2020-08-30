@@ -1,6 +1,7 @@
 package jumpingalien.util;
 
-import be.kuleuven.cs.som.annotate.*;
+import jumpingalien.model.Basic;
+import jumpingalien.model.Raw;
 
 /**
  * A class of sprites involving a name, a width and a height.

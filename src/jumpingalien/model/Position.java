@@ -1,7 +1,5 @@
 package jumpingalien.model;
 
-import be.kuleuven.cs.som.annotate.Basic;
-
 public class Position <T extends  Number> implements Cloneable{
 	
 	private T x;

@@ -1,6 +1,4 @@
 package jumpingalien.model;
-import be.kuleuven.cs.som.annotate.Basic;
-
 
 public enum Feature {
 	

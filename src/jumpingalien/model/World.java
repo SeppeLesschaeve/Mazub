@@ -5,8 +5,6 @@ import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import be.kuleuven.cs.som.annotate.*;
-
 /**
  * This class holds a rectangular Game World that is composed of a fixed number of non-overlapping pixels with length 0.01 m;
  * a Visible Window as the part of the Game World that is visible during the game,
@@ -144,8 +142,6 @@ public class World{
 	
 	/**
 	 * This method is used to set the Target Tile
-	 * @param tileSize 
-	 * 
 	 * @param target
 	 * 			This parameter is used as the x- and y- coordinate of the Target Tile 
 	 * 			(as Tile Coordinates that are the coordinates of the origin of that Tile divided by tileSize)

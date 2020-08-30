@@ -2,7 +2,6 @@ package jumpingalien.model;
 
 import java.util.Arrays;
 
-import be.kuleuven.cs.som.annotate.Basic;
 import jumpingalien.util.Sprite;
 
 public abstract class GameObject implements Comparable<GameObject>{

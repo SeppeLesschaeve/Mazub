@@ -1,7 +1,5 @@
 package jumpingalien.model;
 
-import be.kuleuven.cs.som.annotate.Basic;
-import be.kuleuven.cs.som.annotate.Model;
 import jumpingalien.util.Sprite;
 
 /**
@@ -31,7 +29,6 @@ public abstract class Plant extends Organism implements Movable{
 	 * @post ...
 	 * 		| this.hitPoint = new HitPoint(point, 0, point)
 	 */
-	@Model
 	protected Plant(int pixelLeftX, int pixelBottomY, int point, Sprite... sprites) {
 		super(pixelLeftX, pixelBottomY, point, 0, point, sprites); 
 	}
@@ -78,7 +75,7 @@ public abstract class Plant extends Organism implements Movable{
 	/**
 	 * This method is used to set the Timer
 	 * 
-	 * @param timer
+	 * @param time
 	 * 			This parameter is used to set the Timer
 	 * 
 	 * @post ...

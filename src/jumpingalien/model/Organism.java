@@ -3,7 +3,6 @@ package jumpingalien.model;
 import java.util.HashSet;
 import java.util.Set;
 
-import be.kuleuven.cs.som.annotate.*;
 import jumpingalien.util.Sprite;
 
 /**
@@ -25,7 +24,6 @@ public abstract class Organism extends GameObject implements Movable{
 	private double delay = 0.0;
 	protected Kinematics kinematics = new Kinematics() ;
 
-	@Model
 	protected Organism(int x, int y, int initPoints, int minPoints, int maxPoints, Sprite... sprites) throws IllegalArgumentException{
 		super(x,y, sprites);
 		this.setHitPoint(initPoints, minPoints, maxPoints);

@@ -2,9 +2,6 @@ package jumpingalien.model;
 
 import java.util.*;
 
-import be.kuleuven.cs.som.annotate.Basic;
-import be.kuleuven.cs.som.annotate.Raw;
-
 /**
  * This class holds a TreeMap of slimes as values and their id as key where slimes can be added and removed
  * and can be linked to a world

@@ -1,6 +1,5 @@
 package jumpingalien.model;
 
-import be.kuleuven.cs.som.annotate.Model;
 import jumpingalien.util.Sprite;
 
 /**
@@ -11,8 +10,7 @@ import jumpingalien.util.Sprite;
  *
  */
 public abstract class Creature extends Organism implements Movable{
-	
-	@Model
+
 	protected Creature(int x, int y, int initialHit, int minHit, int maxHit, Sprite... sprites){
 		super(x, y, initialHit, minHit, maxHit, sprites);
 	}
