@@ -2,6 +2,8 @@ package jumpingalien.model;
 
 import java.util.Set;
 
+import annotate.Basic;
+import annotate.Raw;
 import jumpingalien.util.Sprite;
 
 /**

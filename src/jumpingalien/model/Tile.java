@@ -1,5 +1,7 @@
 package jumpingalien.model;
 
+import annotate.Basic;
+
 public class Tile {
 	
 	private Rectangle rectangle;

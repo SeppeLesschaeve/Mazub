@@ -1,5 +1,8 @@
 package jumpingalien.model;
 
+import annotate.Basic;
+import annotate.Value;
+
 @Value
 public class Constant {
 	

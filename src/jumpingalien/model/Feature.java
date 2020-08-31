@@ -1,5 +1,7 @@
 package jumpingalien.model;
 
+import annotate.Basic;
+
 public enum Feature {
 	
 	AIR(0), SOLID_GROUND(1), WATER(2), MAGMA(3), ICE(4), GAS(5);

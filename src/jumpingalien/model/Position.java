@@ -1,5 +1,7 @@
 package jumpingalien.model;
 
+import annotate.Basic;
+
 public class Position <T extends  Number> implements Cloneable{
 	
 	private T x;

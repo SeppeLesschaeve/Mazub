@@ -5,6 +5,9 @@ import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import annotate.Basic;
+import annotate.Raw;
+
 /**
  * This class holds a rectangular Game World that is composed of a fixed number of non-overlapping pixels with length 0.01 m;
  * a Visible Window as the part of the Game World that is visible during the game,

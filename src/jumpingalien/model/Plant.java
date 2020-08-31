@@ -1,5 +1,6 @@
 package jumpingalien.model;
 
+import annotate.Basic;
 import jumpingalien.util.Sprite;
 
 /**

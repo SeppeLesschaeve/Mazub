@@ -1,7 +1,8 @@
 package jumpingalien.util;
 
-import jumpingalien.model.Basic;
-import jumpingalien.model.Raw;
+import annotate.Basic;
+import annotate.Immutable;
+import annotate.Raw;
 
 /**
  * A class of sprites involving a name, a width and a height.

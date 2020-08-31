@@ -1,5 +1,7 @@
 package jumpingalien.model;
 
+import annotate.Basic;
+
 public class HitPoint implements Cloneable{
 	
 	private int points;

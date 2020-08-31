@@ -1,5 +1,7 @@
 package jumpingalien.model;
 
+import annotate.Basic;
+
 public class Rectangle implements Cloneable{
 	
 	private Position<Integer> origin;
