@@ -2,7 +2,6 @@ package taglet;
 
 import com.sun.javadoc.Tag;
 import com.sun.tools.doclets.Taglet;
-import com.sun.tools.doclets.internal.toolkit.taglets.Taglet;
 
 import java.util.Map;
 import java.util.regex.Pattern;
