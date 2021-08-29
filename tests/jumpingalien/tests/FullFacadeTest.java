@@ -3776,10 +3776,10 @@ class FullFacadeTest {
 		double expected_Y_Position = 10.0 + 0.1 - 0.06125;
 		assertEquals(expected_Y_Position,facade.getActualPosition(spiderToMoveDown)[1],LOW_PRECISION*2);
 		assertEquals(0.0,facade.getVelocity(spiderToMoveDown)[0],LOW_PRECISION);
-		double expected_Y_Velocity = -(1.0 + 0.5*0.15);
+		double expected_Y_Velocity = -(1.0 + 0.5*0.05); //0.15 <-> 0.05
 		assertEquals(expected_Y_Velocity,facade.getVelocity(spiderToMoveDown)[1],LOW_PRECISION);
 		facade.advanceTime(spiderMovingUp, 0.15);
-		expected_Y_Position = 10.4 + 1.0*0.15 + 0.5*0.15*0.15;
+		expected_Y_Position = 10.4 + 1.0*0.15 + 0.5*0.15*0.15/2; //op het eind /2
 		assertEquals(expected_Y_Position,facade.getActualPosition(spiderMovingUp)[1],LOW_PRECISION);			
 		// After 12*.015 seconds, the spider moving down almost reaches its maximum speed.
 		double YPositionAfterFirstMove = facade.getActualPosition(spiderToMoveDown)[1];

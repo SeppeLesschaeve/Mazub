@@ -2,7 +2,7 @@ package jumpingalien.model;
 
 import annotate.Basic;
 
-public class Rectangle implements Cloneable{
+public class Rectangle{
 	
 	private Position<Integer> origin;
 	private int width;
@@ -14,36 +14,28 @@ public class Rectangle implements Cloneable{
 	
 	public Rectangle(Position<Integer> origin, int width, int height) {
 		this.origin = origin;
-		this.setDimension(width, height);
+		this.setWidth(width);
+		this.setHeight(height);
 	}
 	
-	public Position<Integer> getOrigin(){
-		return this.origin;
+	public int getXCoordinate() {
+		return this.origin.getXCoordinate();
 	}
-	
-	public int getX() {
-		return this.origin.getX();
+
+	public void setXCoordinate(int xCoordinate) {
+		this.origin.setXCoordinate(xCoordinate);
 	}
-	
-	public int getY() {
-		return this.origin.getY();
+
+	public int getYCoordinate() {
+		return this.origin.getYCoordinate();
 	}
-	
-	public void updateHorizontalComponent(int x) {
-		this.origin.setX(x);
+
+	public void setYCoordinate(int yCoordinate) {
+		this.origin.setYCoordinate(yCoordinate);
 	}
-	
-	public void updateVerticalComponent(int y) {
-		this.origin.setY(y);
-	}
-	
-	public void setOrigin(int x, int y) {
-		this.origin.setX(x);
-		this.origin.setY(y);
-	}
-	
+
 	public int getWidth() {
-		return Integer.valueOf(width);
+		return width;
 	}
 
 	public void setWidth(int width) {
@@ -52,35 +44,33 @@ public class Rectangle implements Cloneable{
 	}
 
 	public int getHeight() {
-		return Integer.valueOf(height);
+		return height;
 	}
 
 	public void setHeight(int height) {
 		if(height <= 0) throw new IllegalArgumentException("The height must be strictly positive");
 		this.height = height;
 	}
-	
-	public void setDimension(int width, int height) {
-		this.setWidth(width);
-		this.setHeight(height);
-	}
 
 	@Basic
 	public boolean contains(Position<Integer> point) {
-		return origin.getX() <= point.getX() && point.getX() <= getWidth() - 1 && 
-				origin.getY() <= point.getY() && point.getY() <= getHeight() - 1;
+		return getXCoordinate() <= point.getXCoordinate() && point.getXCoordinate() <= getWidth() - 1 &&
+				getYCoordinate() <= point.getYCoordinate() && point.getYCoordinate() <= getHeight() - 1;
 	}
 	
 	@Basic
 	public boolean overlaps(Rectangle other) {
-		return getX() + width -1 >= other.getX()
-				&& other.getX() + other.getWidth() - 1 >= getX()
-				&& getY() + height -1 >= other.getY()
-				&& other.getY() + other.getHeight() - 1 >= getY();
+		return getXCoordinate() + width - 1 >= other.getXCoordinate()
+				&& other.getXCoordinate() + other.getWidth() - 1 >= getXCoordinate()
+				&& getYCoordinate() + height -1 >= other.getYCoordinate()
+				&& other.getYCoordinate() + other.getHeight() - 1 >= getYCoordinate();
 	}
 
-	public Rectangle clone() {
-		return new Rectangle(origin, width, height);
+	public Rectangle copy() {
+		return new Rectangle(origin.copy(), width, height);
 	}
 
+    public boolean contains(int xCoordinate, int yCoordinate) {
+		return contains(new Position<>(xCoordinate, yCoordinate));
+    }
 }

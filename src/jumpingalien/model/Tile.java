@@ -1,10 +1,11 @@
 package jumpingalien.model;
 
 import annotate.Basic;
+import jumpingalien.model.feature.Feature;
 
 public class Tile {
 	
-	private Rectangle rectangle;
+	private final Rectangle rectangle;
 	private Feature feature;
 	
 	public Tile(Position<Integer> position, int length, Feature feature) {
@@ -18,15 +19,15 @@ public class Tile {
 	
 	@Basic
 	public Rectangle getRectangle() {
-		return rectangle.clone();
+		return rectangle.copy();
 	}
 	
 	@Basic
 	public Feature getFeature() {
 		return this.feature;
 	}
-	
-	protected void setFeature(Feature feature) {
+
+	public void setFeature(Feature feature) {
 		this.feature = feature;
 	}
 }

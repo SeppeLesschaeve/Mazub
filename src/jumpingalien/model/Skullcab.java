@@ -1,5 +1,14 @@
 package jumpingalien.model;
 
+import jumpingalien.model.animation.GameObjectVisualizer;
+import jumpingalien.model.animation.SkullcabVisualizer;
+import jumpingalien.model.collision.Collidable;
+import jumpingalien.model.collision.SkullcabCollider;
+import jumpingalien.model.feature.FeatureHandler;
+import jumpingalien.model.feature.SkullcabFeatureHandler;
+import jumpingalien.model.kinematics.JumpKinematics;
+import jumpingalien.model.kinematics.Kinematics;
+import jumpingalien.model.storage.GameObjectStorage;
 import jumpingalien.util.Sprite;
 
 /**
@@ -12,7 +21,7 @@ import jumpingalien.util.Sprite;
  * @author Seppe Lesschaeve (Informatica)
  *
  */
-public class Skullcab extends Plant implements OnlyVerticalMovable{
+public class Skullcab extends Plant implements VerticalMovable {
 	
 	/**
 	 * This constructor will set the initial Pixel Position, Actual Position, HitPoint and the images to show the animation
@@ -36,46 +45,84 @@ public class Skullcab extends Plant implements OnlyVerticalMovable{
 	public Skullcab(int xPixelLeft, int yBottomLeft, Sprite... sprites){
 		super(xPixelLeft, yBottomLeft, 3, sprites);
 		if(sprites.length != 2) throw new IllegalArgumentException("You must have exactly two images");
-		kinematics.setYVelocity(0.5);
+		startJump();
 	}
-	
+
+	@Override
+	protected Collidable initializeCollider() {
+		return new SkullcabCollider(this);
+	}
+
+	@Override
+	protected FeatureHandler initializeFeatureHandler() {
+		return new SkullcabFeatureHandler(this);
+	}
+
+	@Override
+	protected Kinematics initializeKinematics() {
+		return new JumpKinematics();
+	}
+
+	@Override
+	protected GameObjectVisualizer initializeVisualizer(int xCoordinate, int yCoordinate, Sprite[] sprites) {
+		return new SkullcabVisualizer(this, xCoordinate, yCoordinate, sprites);
+	}
+
+	@Override
+	public double[] getAcceleration() {
+		return new double[]{0.0, ((JumpKinematics) getKinematics()).getAcceleration()};
+	}
+
+	@Override
+	public double[] getVelocity() {
+		return new double[]{0.0, ((JumpKinematics) getKinematics()).getVelocity()};
+	}
+
+	@Override
+	protected void performDuringTimeStep() {
+		if(getMoveTime() + getTimeStep() >= Constant.PLANT_SWITCH_TIME.getValue()) {
+			double remainingMoveTime = getMoveTime() + getTimeStep() - Constant.PLANT_SWITCH_TIME.getValue();
+			move(Constant.PLANT_SWITCH_TIME.getValue() - getMoveTime());
+			if(isJumping() && canFall()) startFall();
+			else if(isFalling() && canJump()) startJump();
+			move(remainingMoveTime);
+		} else {
+			move(getTimeStep());
+		}
+		setAge(getAge() + getTimeStep());
+		if(isDead()){
+			setDelay(getDelay() + getTimeStep());
+			if(getDelay() == Constant.REMOVE_DELAY.getValue()) terminate();
+		}
+	}
+
 	@Override
 	public boolean isDead() {
-		return super.getAge() >= 12 || super.getPoints() == 0;
+		return super.getAge() >= 12 || super.getHitPoints() == 0;
 	}
 
 	@Override
-	protected void arrangeEat(double dt) {
-		super.updateHitPoints(-1);
-		if(isDead()) terminate();
-	}
-	
-	/**
-	 * This method will update the position using deltaT, velocity and the current sprite when not dead 
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as the time to update the position
-	 * @post ...
-	 * 		| setTimer(getTimer() + deltaT) && jump(deltaT)
-	 * @post ...
-	 *		|if(!super.isInside()) then terminate() && return
-	 * @post ...
-	 *		|if(getWorld() != null && getWorld().getPlayer() != null) then getWorld().handleImpact(getWorld().getPlayer(), this, deltaT)
-	 * 
-	 */
-	@Override
-	protected void arrangeMove(double deltaT){
-		if(getMoveTime() >= Constant.PLANT_SWITCH_TIME.getValue()) {
-			if(isGoingUp()) startFall();
-			else if(isGoingDown()) startJump();
-		}else jump(deltaT);
-		if(!super.isInside()) terminate();
+	public int getOrientation() {
+		if(isJumping()) return 1;
+		if(isFalling()) return -1;
+		return 0;
 	}
 
 	@Override
-	public boolean canStartJump() {
-		return !isDead();
+	public void addToStorage(GameObjectStorage worldStorage) {
+		worldStorage.addSkullcab(this);
 	}
+
+	@Override
+	public void removeFromStorage(GameObjectStorage worldStorage) {
+		worldStorage.removeSkullcab(this);
+	}
+
+	@Override
+	protected void accept(Collidable collidable) {
+		collidable.collideWithSkullcab(this);
+	}
+
 
 	@Override
 	public boolean canJump() {
@@ -83,13 +130,8 @@ public class Skullcab extends Plant implements OnlyVerticalMovable{
 	}
 
 	@Override
-	public boolean isGoingUp() {
-		return kinematics.getYVelocity() > 0;
-	}
-
-	@Override
-	public boolean canStartFall() {
-		return !isDead();
+	public boolean isJumping() {
+		return ((JumpKinematics) getKinematics()).getVelocity() > 0;
 	}
 
 	@Override
@@ -98,40 +140,24 @@ public class Skullcab extends Plant implements OnlyVerticalMovable{
 	}
 
 	@Override
-	public boolean isGoingDown() {
-		return kinematics.getYVelocity() < 0;
+	public boolean isFalling() {
+		return ((JumpKinematics) getKinematics()).getVelocity() < 0;
 	}
 
 	@Override
 	public void startJump() {
-		kinematics.setYVelocity(0.5);
-		super.setSprite(0);
-		super.setMoveTime(0);
+		((JumpKinematics) getKinematics()).setVelocity(0.5);
 	}
 
 	@Override
-	public void endGoingUp() {
-		kinematics.setYVelocity(0.0);
+	public void endJump() {
+		assert(isMovingVertically() && !isDead());
+		((JumpKinematics) getKinematics()).setVelocity(0.0);
 	}
 
 	@Override
 	public void startFall() {
-		kinematics.setYVelocity(-0.5);
-		super.setSprite(1);
-		super.setMoveTime(0);
+		((JumpKinematics) getKinematics()).setVelocity(-0.5);
 	}
-
-	@Override
-	public void endGoingDown() {
-		kinematics.setYVelocity(0.0);
-	}
-
-	@Override
-	public void jump(double deltaT) {
-		super.setMoveTime(getMoveTime()+deltaT);
-		super.updateVerticalComponent(this.getPosition().getY() + (kinematics.getYVelocity()*deltaT) + (kinematics.getYAcceleration()*deltaT*deltaT/2));
-		kinematics.updateYVelocity(deltaT);
-	}
-
 	
 }

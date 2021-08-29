@@ -1,12 +1,11 @@
 package jumpingalien.model;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.*;
 
 import annotate.Basic;
 import annotate.Raw;
+import jumpingalien.model.feature.Feature;
+import jumpingalien.model.storage.WorldStorage;
 
 /**
  * This class holds a rectangular Game World that is composed of a fixed number of non-overlapping pixels with length 0.01 m;
@@ -44,10 +43,8 @@ public class World{
 	
 	private static final int MAX_SCHOOLS = 10;
 	private final int maxObjects;
-	
-	private PriorityQueue<GameObject> gameObjects = new PriorityQueue<>();
+	private WorldStorage worldStorage;
 	private Set<School> schools = new HashSet<>();
-	private Mazub player;
 
 	private boolean isTerminated;
 	private boolean started;
@@ -98,6 +95,7 @@ public class World{
 		setFeatureOfTiles(tileSize, nbTilesX, nbTilesY, geologicalFeatures);
 		this.tileLength = tileSize;
 		this.gameWorld = new Rectangle(0,0, tileSize*nbTilesX, tileSize*nbTilesY);
+		this.worldStorage = new WorldStorage(this);
 		setWindow(visibleWidth, visibleHeight);
 		setTargetTile(target);
 		this.maxObjects = maxObjects;
@@ -135,7 +133,7 @@ public class World{
 		int index = 0;
 		for(int i = 0; i < nbTilesY; i++) {
 			for(int j = 0; j < nbTilesX; j++, index++) {
-				Position<Integer> position = new Position<>(j*tileSize, i*tileSize);
+				Position<Integer> position = new Position<>(j * tileSize, i * tileSize);
 				if(index < geologicalFeatures.length) {
 					tiles[i][j] = new Tile(position, tileSize, Feature.getFeature(geologicalFeatures[index]));
 				}else tiles[i][j]= new Tile(position, tileSize, Feature.AIR);
@@ -225,7 +223,7 @@ public class World{
 	 */
 	@Basic
 	public int getVisibleWindowXCoordinate() {
-		return this.visibleWindow.getX();
+		return (int) this.visibleWindow.getXCoordinate();
 	}
 	
 	/**
@@ -236,7 +234,7 @@ public class World{
 	 */
 	@Basic
 	public int getVisibleWindowYCoordinate() {
-		return this.visibleWindow.getY();
+		return (int) this.visibleWindow.getYCoordinate();
 	}
 	
 	/**
@@ -256,8 +254,7 @@ public class World{
 	 */
 	@Basic
 	public Feature getTileFeature(int x, int y) {
-		Position<Integer> point = new Position<>(x,y);
-		if(!this.gameWorld.contains(point)) return Feature.AIR;
+		if(!this.gameWorld.contains(new Position<>(x, y))) return Feature.AIR;
 		x = (x- x%tileLength)/tileLength;  y = (y-y%tileLength)/tileLength;
 		return tiles[y][x].getFeature();
 	}
@@ -279,18 +276,16 @@ public class World{
 	 */
 	public boolean shallBePassable(Rectangle rect) {
 		if(rect == null) return true;
-		int newX = 0;
-		int newY = 0;
-		for(int pixelX = rect.getX(); pixelX <= rect.getX()+rect.getWidth()-1; pixelX+=newX) {
-			for(int pixelY = rect.getY(); pixelY <= rect.getY()+rect.getHeight()-1; pixelY+=newY) {
+		for(int newX, pixelX = rect.getXCoordinate(); pixelX <= rect.getXCoordinate() + rect.getWidth() - 1; pixelX += newX) {
+			for(int newY, pixelY = rect.getYCoordinate(); pixelY <= rect.getYCoordinate() + rect.getHeight() - 1; pixelY += newY) {
 				if(!getTileFeature(pixelX, pixelY).isPassable()) {
 					return false; 
 				}
-				newY = Math.min(tileLength, rect.getY() + rect.getHeight()-1 - pixelY);
-				if(newY < tileLength) newY=1;
+				newY = Math.min(tileLength, rect.getYCoordinate() + rect.getHeight() - 1 - pixelY);
+				if(newY < tileLength) newY = 1;
 			}
-			newX = Math.min(tileLength, rect.getX() + rect.getWidth()-1 - pixelX);
-			if(newX < tileLength) newX=1;
+			newX = Math.min(tileLength, rect.getXCoordinate() + rect.getWidth() - 1 - pixelX);
+			if(newX < tileLength) newX = 1;
 		}
 		return true;
 	}
@@ -313,7 +308,7 @@ public class World{
 	 */
 	@Basic
 	public int getTargetTileXCoordinate() {
-		return this.targetTile.getRectangle().getX()/getTileLength();
+		return (int) (this.targetTile.getRectangle().getXCoordinate()/getTileLength());
 	}
 	
 	/**
@@ -324,7 +319,7 @@ public class World{
 	 */
 	@Basic
 	public int getTargetTileYCoordinate() {
-		return this.targetTile.getRectangle().getY()/getTileLength();
+		return (int) (this.targetTile.getRectangle().getYCoordinate()/getTileLength());
 	}
 	
 	/**
@@ -367,59 +362,7 @@ public class World{
 	 */
 	@Basic
 	public Mazub getPlayer() {
-		return player;
-	}
-	
-	/**
-	 * This method will set the player 
-	 * 
-	 * @param player
-	 * 		This parameter is used as player
-	 * @post ...
-	 * 		|(new this).player = player
-	 * 
-	 */
-	public void setPlayer(Mazub player)  {
-		this.player = player;
-	}
-	
-	/**
-	 * This method will unset the player
-	 * 
-	 * @effect ...
-	 * 		|setPlayer(null)
-	 * 
-	 */
-	public void unsetPlayer() {
-		setPlayer(null);
-	}
-	
-	/**
-	 * This method returns whether a GameObject overlaps with any other GameObject in gameObjects
-	 * 
-	 * @param object
-	 * 			This parameter is used as the GameObject
-	 * @return ...
-	 * 			| for(Object other: getGameObjects()) 
-	 *			| 	 if(object.getRectangle().overlaps(((GameObject) other).getRectangle()) && !object.equals(other) && other instanceof Creature && object instanceof Creature)
-	 *			|		if(other instanceof Slime && object instanceof Slime) then result == ( ((Slime) other).getSchool() == ((Slime) object).getSchool() )
-	 *			|		
-	 *			|	 else result == true
-	 *			|
-	 *			| result ==  false
-	 *
-	 */
-	private boolean shallOverlap(GameObject object) {
-		for(Object other: getGameObjects()) {
-			if(object.getRectangle().overlaps(((Organism) other).getRectangle()) && !object.equals(other) && other instanceof Creature && object instanceof Creature) {
-				if(other instanceof Slime && object instanceof Slime) {
-					return((Slime) other).getSchool() == ((Slime) object).getSchool();
-				}else {
-					return true;
-				}
-			}
-		}
-		return false;
+		return worldStorage.getPlayer();
 	}
 
 	/**
@@ -437,18 +380,15 @@ public class World{
 	 * 
 	 */
 	private boolean shallBeImpassable(GameObject object) {
-		Rectangle rect = object.getRectangle();
 		if(object instanceof Plant) return false;
-		int newX = 0; 
-		int newY = 0;
-		for(int pixelX = rect.getX(); pixelX < rect.getX()+rect.getWidth()-1; pixelX+=newX) {
-			for(int pixelY = rect.getY()+1; pixelY < rect.getY()+rect.getHeight()-1; pixelY+=newY) {
+		for(int newX, pixelX = object.getXCoordinate(); pixelX <= object.getXCoordinate() + object.getImageWidth() - 1; pixelX += newX) {
+			for(int newY, pixelY = object.getYCoordinate() + 1; pixelY <= object.getYCoordinate() + object.getImageHeight() - 1; pixelY += newY) {
 				if(!getTileFeature(pixelX, pixelY).isPassable()) return true;
-				newY = Math.min(tileLength, rect.getY() + rect.getHeight()-1 - pixelY);
-				if(newY < tileLength) newY=1;
+				newY = Math.min(tileLength, object.getYCoordinate() + object.getImageHeight() - 1 - pixelY);
+				if(newY < tileLength) newY = 1;
 			}
-			newX = Math.min(tileLength, rect.getX() + rect.getWidth()-1 - pixelX);
-			if(newX < tileLength) newX=1;
+			newX = Math.min(tileLength, object.getXCoordinate() + object.getImageWidth() - 1 - pixelX);
+			if(newX < tileLength) newX = 1;
 		}
 		return false;
 	}
@@ -461,9 +401,9 @@ public class World{
 	 * 		|	( canHaveAsGameObject((GameObject) gameObject) && ((GameObject)gameObject).getWorld().equals(this))
 	 */
 	public boolean hasProperGameObjects() {
-		for(Object gameObject: getGameObjects()) {
-			if(!canHaveAsGameObject((GameObject) gameObject)) return false;
-			if(!((GameObject)gameObject).getWorld().equals(this)) return false;
+		for(GameObject gameObject: getAllGameObjects()) {
+			if(!canHaveAsGameObject(gameObject)) return false;
+			if(!gameObject.getWorld().equals(this)) return false;
 		}
 		return true;
 	}
@@ -480,11 +420,17 @@ public class World{
 	 *		
 	 */
 	public boolean canHaveAsGameObject(GameObject object) {
-		if(gameObjects.size() == maxObjects && !(object instanceof Mazub)) return false;
-		if(object.getWorld() != null) return false; 
-		return !object.isTerminated() && !shallBeImpassable(object) && !shallOverlap(object) && object.getRectangle().overlaps(gameWorld);
+		if(getAllGameObjects().size() == maxObjects && !(object instanceof Mazub)) return false;
+		if(object.getWorld() != null) return false;
+		if(object instanceof Plant) return !object.isTerminated() && object.overlaps(gameWorld);
+		return !object.isTerminated() && !shallBeImpassable(object)
+				&& object.getOverlappingCreatures(this).isEmpty() && object.overlaps(gameWorld);
 	}
-	
+
+	public ArrayList<GameObject> getAllGameObjects() {
+		return worldStorage.getAllGameObjects();
+	}
+
 	/**
 	 * This method returns whether a GameObject still belongs to this world
 	 * 
@@ -494,7 +440,7 @@ public class World{
 	 * 		| result == this.gameObjects.contains(object) && object.getWorld().equals(this)
 	 */
 	public boolean hasProperGameObject(GameObject object) {
-		return this.gameObjects.contains(object) && object.getWorld().equals(this);
+		return getAllGameObjects().contains(object) && object.getWorld().equals(this);
 	}
 	
 	/**
@@ -514,18 +460,8 @@ public class World{
 	 *		|object.setWorld(this);
 	 */
 	@Raw
-	public void addGameObject(GameObject object){
-		if(!canHaveAsGameObject(object) || isTerminated() || isStarted()) 
-			throw new IllegalArgumentException("You can not use this object in this situation");
-		if(player != null && object instanceof Mazub) throw new IllegalArgumentException("You can not have multiple aliens");
-		gameObjects.add(object);
-		if(object instanceof Mazub) {
-			player = (Mazub) object;
-			setWindow(getVisibleWindowWidth(), getVisibleWindowHeight());
-		}
-		if(object instanceof Slime && ((Slime) object).getSchool() != null )
-			((Slime) object).getSchool().setWorld(this);
-		object.setWorld(this);
+	public void addGameObject(GameObject gameObject){
+		gameObject.addToStorage(worldStorage);
 	}
 	
 	/**
@@ -544,25 +480,10 @@ public class World{
 	 *		| object.setWorld(null)
 	 *
 	 */
-	public void removeGameObject(GameObject object) {
-		if (!hasProperGameObject(object)) throw new IllegalArgumentException("You can not use this object");
-		if(object instanceof Mazub) unsetPlayer();
-		gameObjects.remove(object);
-		if(object instanceof Slime && ((Slime) object).getSchool() != null && ((Slime) object).getSchool().getSlimes().size() == 1)
-			((Slime) object).getSchool().setWorld(null);
-		object.clearWorld();
+	public void removeGameObject(GameObject gameObject) {
+		gameObject.removeFromStorage(worldStorage);
 	}
 
-	/**
-	 * This method returns the game objects in the Game World
-	 * 
-	 * @return ...
-	 * 		|result == gameObjects.toArray().clone()
-	 */
-	@Basic
-	public Object[] getGameObjects() {
-		return gameObjects.toArray().clone();
-	}
 
 	/**
 	 * This method returns whether this World has proper Schools attached to it.
@@ -627,9 +548,7 @@ public class World{
 	 */
 	public void setSchool(School school) {
 		this.schools.add(school);
-		for(Slime slime: school.getSlimes()) {
-			this.gameObjects.add(slime);
-		}
+		school.getSlimes().forEach(slime -> slime.addToStorage(worldStorage));
 	}
 
 	/**
@@ -664,17 +583,17 @@ public class World{
 	 *		|		gameWorld.getDimension().getHeight()-visibleWindow.getDimension().getHeight(), xVisible, yVisible)
 	 *
 	 */
-	private void setWindow(int xVisible, int yVisible) {
+	public void setWindow(int xVisible, int yVisible) {
 		if(xVisible < 0 || yVisible < 0) { throw new IllegalArgumentException("The dimensions can not be negative");}
-		if(player == null) {
+		if(getPlayer() == null) {
 			this.visibleWindow = new Rectangle(0, 0, xVisible, yVisible); return;
 		}
-		if(player.getRectangle().getX() - 200 >= 0 && player.getRectangle().getY() - 200 >= 0 &&
-			player.getRectangle().getX()+player.getRectangle().getWidth()-1 +200 <= gameWorld.getWidth() &&
-				player.getRectangle().getY()+player.getRectangle().getHeight()-1 +200 <= gameWorld.getHeight() &&
-					xVisible >= 400 + player.getRectangle().getWidth() && yVisible >= 400 + player.getRectangle().getWidth()) {
-						this.visibleWindow = new Rectangle(player.getRectangle().getX() -200, player.getRectangle().getY()- 200, xVisible, yVisible);
-		}else if(!visibleWindow.contains(player.getRectangle().getOrigin())){
+		if(getPlayer().getXCoordinate() - 200 >= 0 && getPlayer().getYCoordinate() - 200 >= 0 &&
+			getPlayer().getXCoordinate() + getPlayer().getImageWidth() - 1 + 200 <= gameWorld.getWidth() &&
+				getPlayer().getYCoordinate() + getPlayer().getImageHeight() - 1 + 200 <= gameWorld.getHeight() &&
+					xVisible >= 400 + getPlayer().getImageWidth() && yVisible >= 400 + getPlayer().getImageHeight()) {
+						this.visibleWindow = new Rectangle(getPlayer().getXCoordinate() - 200, getPlayer().getYCoordinate() - 200, xVisible, yVisible);
+		}else if(!visibleWindow.contains(getPlayer().getXCoordinate(), getPlayer().getYCoordinate())){
 			this.visibleWindow = new Rectangle(gameWorld.getWidth()-visibleWindow.getWidth(), 
 					gameWorld.getHeight()-visibleWindow.getHeight(), xVisible, yVisible);
 		}
@@ -683,10 +602,11 @@ public class World{
 	public void advanceTime(double deltaT) {
 		if(Double.isNaN(deltaT) || deltaT < 0 || deltaT > 0.2 || Double.isInfinite(deltaT)) {
 			throw new IllegalArgumentException("You can not invoke advanceTime with a NaN as time are not between 0 and 0.2");}
-		Iterator<GameObject> gameObjectIterator = gameObjects.iterator();
-		while(gameObjectIterator.hasNext()) {
-			gameObjectIterator.next().advanceTime(deltaT);
+		for (GameObject gameObject : getAllGameObjects()) {
+			if(gameObject == getPlayer()) getPlayer().setAdvancedByWorld(true);
+			gameObject.advanceTime(deltaT);
 		}
+		if(getPlayer() != null) getPlayer().setAdvancedByWorld(false);
 	}
 	
 	/**
@@ -705,14 +625,14 @@ public class World{
 	 *
 	 */
 	public void updateWindow(Position<Integer> position) {
-		int x = player.getRectangle().getX() - position.getX(); 
-		int y = player.getRectangle().getY() - position.getY();
-		if((x > 0 && visibleWindow.getOrigin().getX() + x + visibleWindow.getWidth() - 1 < gameWorld.getWidth()) || 
-				(x < 0 && visibleWindow.getOrigin().getX() + x >= 0)) 
-			visibleWindow.getOrigin().setX(visibleWindow.getOrigin().getX() + x);
-		if((y > 0 && visibleWindow.getOrigin().getY() + y + visibleWindow.getHeight() -1 < gameWorld.getHeight()) ||
-				(y < 0 && visibleWindow.getOrigin().getY() + y >= 0)) 
-			visibleWindow.getOrigin().setY(visibleWindow.getOrigin().getY() + y);
+		int x = getPlayer().getXCoordinate() - position.getXCoordinate();
+		int y = getPlayer().getYCoordinate() - position.getYCoordinate();
+		if((x > 0 && visibleWindow.getXCoordinate() + x + visibleWindow.getWidth() - 1 < gameWorld.getWidth()) ||
+				(x < 0 && visibleWindow.getXCoordinate() + x >= 0))
+			visibleWindow.setXCoordinate(visibleWindow.getXCoordinate() + x);
+		if((y > 0 && visibleWindow.getYCoordinate() + y + visibleWindow.getHeight() -1 < gameWorld.getHeight()) ||
+				(y < 0 && visibleWindow.getYCoordinate() + y >= 0))
+			visibleWindow.setYCoordinate(visibleWindow.getYCoordinate() + y);
 	}
 	
 	/**
@@ -747,8 +667,7 @@ public class World{
 	 * 		|this.setTerminated()
 	 */
 	public void terminate() {
-		gameObjects.stream().forEach(object -> object.clearWorld());
-		gameObjects.clear();
+		getAllGameObjects().forEach(GameObject::terminate);
 		this.setTerminated();
 	}
 	
@@ -786,7 +705,18 @@ public class World{
 	 * 		| result == getPlayer() == null || getPlayer().getRectangle().overlaps(getTargetTile().getRectangle())
 	 */
 	public boolean isGameOver() {
-		return getPlayer() == null || getPlayer().getRectangle().overlaps(getTargetTile().getRectangle());
+		return getPlayer() == null || getPlayer().overlaps(getTargetTile().getRectangle());
 	}
 
+	public boolean isInside(int xCoordinate, int yCoordinate) {
+		return gameWorld.contains(xCoordinate, yCoordinate);
+	}
+
+	public ArrayList<GameObject> getOthers() {
+		return worldStorage.getOthers();
+	}
+
+	public ArrayList<Plant> getPlants() {
+		return worldStorage.getPlants();
+	}
 }

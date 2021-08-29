@@ -18,8 +18,8 @@
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src-provided" isTestSource="false" />
     </content>
+    <orderEntry type="jdk" jdkName="15" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="module-library">
       <library name="junit5">
         <CLASSES>

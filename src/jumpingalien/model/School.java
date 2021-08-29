@@ -4,6 +4,7 @@ import java.util.*;
 
 import annotate.Basic;
 import annotate.Raw;
+import jumpingalien.model.storage.SchoolStorage;
 
 /**
  * This class holds a TreeMap of slimes as values and their id as key where slimes can be added and removed
@@ -20,7 +21,7 @@ import annotate.Raw;
  */
 public class School{
 
-	private TreeMap<Long, Slime> slimes = new TreeMap<>();
+	private SchoolStorage schoolStorage;
 	private World world;
 	
 	/**
@@ -40,6 +41,7 @@ public class School{
 	 */
 	public School(World world){
 		if(world != null && !world.canHaveAsSchool(this)) throw new IllegalStateException();
+		this.schoolStorage = new SchoolStorage(this);
 		this.setWorld(world);
 		if(this.getWorld() != null) {this.getWorld().setSchool(this);}
 	}
@@ -55,10 +57,9 @@ public class School{
 	 */
 	@Basic
 	public Set<Slime> getSlimes(){
-		Set<Slime> school = new HashSet<>();
-		Iterator<Slime> currentSchool = slimes.values().iterator();
-		currentSchool.forEachRemaining(slime -> school.add(slime));
-		return school;
+		Set<Slime> slimes = new HashSet<>();
+		schoolStorage.getAllGameObjects().forEach(slime -> slimes.add((Slime) slime));
+		return slimes;
 	}
 	
 
@@ -71,7 +72,7 @@ public class School{
 	 */
 	@Basic
 	public Slime getLowest() {
-		return slimes.firstEntry().getValue();
+		return schoolStorage.getSlimes().firstEntry().getValue();
 	}
 	
 	/**
@@ -83,7 +84,7 @@ public class School{
 	 */
 	@Basic
 	public Slime getHighest() {
-		return slimes.lastEntry().getValue();
+		return schoolStorage.getSlimes().lastEntry().getValue();
 	}
 
 	/**
@@ -134,7 +135,7 @@ public class School{
 	 * @post ...
 	 * 		| (new this).world = world
 	 */
-	protected void setWorld(World world) {
+    public void setWorld(World world) {
 		if(!canHaveAsWorld(world)) throw new IllegalArgumentException();
 		this.world = world;
 	}
@@ -159,7 +160,7 @@ public class School{
 	 */
 	@Basic
 	public boolean isTerminated() {
-		return this.getWorld() == null && this.slimes == null;
+		return this.getWorld() == null && this.schoolStorage.getSlimes() == null;
 	}
 	
 	/**
@@ -216,9 +217,8 @@ public class School{
 	 */
 	@Raw
 	public void addSlime(@Raw Slime slime){
-		if(!canHaveAsSlime(slime) || slimes == null) throw new IllegalArgumentException();
-		slime.setSchool(this);
-		slimes.put(slime.getId(), slime);
+		if(!canHaveAsSlime(slime) || schoolStorage.getSlimes() == null) throw new IllegalArgumentException();
+		slime.addToStorage(schoolStorage);
 	}
 
 	/**
@@ -237,8 +237,7 @@ public class School{
 	@Raw
 	public void removeSlime(@Raw Slime slime) {
 		if(!getSlimes().contains(slime)) throw new IllegalArgumentException();
-		slime.setSchool(null);
-		this.slimes.remove(slime.getId());
+		slime.removeFromStorage(schoolStorage);
 	}
 	
 	/**
@@ -250,7 +249,7 @@ public class School{
 	 * 		| unsetWorld()
 	 */
 	public void terminate() {
-		slimes = null;
+		schoolStorage.remove();
 		clearWorld();
 	}
 }

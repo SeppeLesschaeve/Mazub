@@ -39,18 +39,13 @@ public class Constant {
 	
 	@Basic
 	public double getValue() {
-		return Double.valueOf(value);
+		return value;
 	}
 	
 	@Override
 	public boolean equals(Object other) {
 		if(!(other instanceof Constant)) return false;
 		else return this.value == ((Constant) other).getValue();
-	}
-	
-	@Override 
-	public int hashCode() {
-		return Integer.valueOf(this.hashCode());
 	}
 	
 	@Override

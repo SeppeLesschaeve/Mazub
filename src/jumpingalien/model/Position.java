@@ -2,44 +2,35 @@ package jumpingalien.model;
 
 import annotate.Basic;
 
-public class Position <T extends  Number> implements Cloneable{
+public class Position <T extends  Number> {
 	
-	private T x;
-	private T y;
-	
-	public Position(T[] position) {
-		this(position[0], position[1]);
-	}
-	
-	public Position(T x, T y) {
-		setPosition(x,y);
+	private T xCoordinate;
+	private T yCoordinate;
+
+	public Position(T xCoordinate, T yCoordinate) {
+		this.setXCoordinate(xCoordinate);
+		this.setYCoordinate(yCoordinate);
 	}
 	
 	@Basic
-	public T getX() {
-		return x;
+	public T getXCoordinate() {
+		return xCoordinate;
 	}
 	
-	public void setX(T x) {
-		this.x = x;
+	public void setXCoordinate(T xCoordinate) {
+		this.xCoordinate = xCoordinate;
 	}
 	
 	@Basic
-	public T getY() {
-		return y;
+	public T getYCoordinate() {
+		return yCoordinate;
 	}
 	
-	public void setY(T y) {
-		this.y = y;
-	}
-	
-	public void setPosition(T x, T y) {
-		this.setX(x);
-		this.setY(y);
-	}
-	
-	public Position<T> clone(){
-		return new Position<T>(x,y);
+	public void setYCoordinate(T yCoordinate) {
+		this.yCoordinate = yCoordinate;
 	}
 
+    public Position<T> copy() {
+		return new Position<>(xCoordinate,yCoordinate);
+    }
 }

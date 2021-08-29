@@ -1,5 +1,14 @@
 package jumpingalien.model;
 
+import jumpingalien.model.animation.GameObjectVisualizer;
+import jumpingalien.model.animation.SneezewortVisualizer;
+import jumpingalien.model.collision.Collidable;
+import jumpingalien.model.collision.SneezewortCollider;
+import jumpingalien.model.feature.FeatureHandler;
+import jumpingalien.model.feature.SneezewortFeatureHandler;
+import jumpingalien.model.kinematics.Kinematics;
+import jumpingalien.model.kinematics.RunKinematics;
+import jumpingalien.model.storage.GameObjectStorage;
 import jumpingalien.util.Sprite;
 
 /**
@@ -9,9 +18,8 @@ import jumpingalien.util.Sprite;
  * @author Seppe Lesschaeve (Informatica)
  * 
  */
-public class Sneezewort extends Plant implements OnlyHorizontalMovable{
-	
-	
+public class Sneezewort extends Plant implements HorizontalMovable {
+
 	/**
 	 * This constructor will set the initial Pixel Position, Actual Position, HitPoint and the images to show the animation
 	 * 
@@ -34,103 +42,120 @@ public class Sneezewort extends Plant implements OnlyHorizontalMovable{
 	public Sneezewort(int xPixelLeft, int yPixelBottom, Sprite... sprites){
 		super(xPixelLeft, yPixelBottom, 1, sprites);
 		if(sprites.length != 2) throw new IllegalArgumentException("You must have exactly two images");
-		kinematics.setXVelocity(-0.5);
+		startMoveLeft();
 	}
-	
+
+	@Override
+	protected Collidable initializeCollider() {
+		return new SneezewortCollider(this);
+	}
+
+	@Override
+	protected FeatureHandler initializeFeatureHandler() {
+		return new SneezewortFeatureHandler(this);
+	}
+
+	@Override
+	protected Kinematics initializeKinematics() {
+		return new RunKinematics();
+	}
+
+	@Override
+	protected GameObjectVisualizer initializeVisualizer(int xCoordinate, int yCoordinate, Sprite[] sprites) {
+		return new SneezewortVisualizer(this, xCoordinate, yCoordinate, sprites);
+	}
+
+	@Override
+	public double[] getAcceleration() {
+		return new double[]{((RunKinematics) getKinematics()).getAcceleration(), 0.0};
+	}
+
+	@Override
+	public double[] getVelocity() {
+		return new double[]{((RunKinematics) getKinematics()).getVelocity(), 0.0};
+	}
+
+	@Override
+	protected void performDuringTimeStep() {
+		if(getMoveTime() + getTimeStep() >= Constant.PLANT_SWITCH_TIME.getValue()) {
+			double remainingMoveTime = getMoveTime() + getTimeStep() - Constant.PLANT_SWITCH_TIME.getValue();
+			move(Constant.PLANT_SWITCH_TIME.getValue() - getMoveTime());
+			if(isMovingRight() && canMoveLeft()) startMoveLeft();
+			else if(isMovingLeft() && canMoveRight()) startMoveRight();
+			move(remainingMoveTime);
+		} else {
+			move(getTimeStep());
+		}
+		setAge(getAge() + getTimeStep());
+		if(isDead()){
+			setDelay(getDelay() + getTimeStep());
+			if(getDelay() == Constant.REMOVE_DELAY.getValue()) terminate();
+		}
+	}
 
 	@Override
 	public boolean isDead() {
-		return super.getAge() >= 10 || super.getPoints() == 0;
-	}
-	
-	@Override
-	protected void arrangeEat(double dt) {
-		super.updateHitPoints(-1);
-		terminate();
-	}
-
-	/**
-	 * This method will update the position using deltaT, velocity and the current sprite when not dead 
-	 * 
-	 * @param deltaT
-	 * 			This parameter is used as the time to update the position
-	 * @post ...
-	 * 		| setTimer(getTimer() + deltaT) && run(deltaT)
-	 * @post ...
-	 *		|if(!super.isInside()) then terminate() && return
-	 * @post ...
-	 *		|if(getWorld() != null && getWorld().getPlayer() != null) then getWorld().handleImpact(getWorld().getPlayer(), this, deltaT)
-	 * 
-	 */
-	@Override
-	protected void arrangeMove(double deltaT) {
-		if(getMoveTime() >= Constant.PLANT_SWITCH_TIME.getValue()) {
-			if(isRunningRight()) startRunLeft();
-			else if(isRunningLeft()) startRunRight();
-		}
-		else run(deltaT);
-		if(!super.isInside()) terminate();
+		return super.getAge() >= 10 || super.getHitPoints() == 0;
 	}
 
 	@Override
-	public boolean canStartRunRight() {
+	public int getOrientation() {
+		if(isMovingRight()) return 1;
+		if(isMovingLeft()) return -1;
+		return 0;
+	}
+
+	@Override
+	public void addToStorage(GameObjectStorage worldStorage) {
+		worldStorage.addSneezewort(this);
+	}
+
+	@Override
+	public void removeFromStorage(GameObjectStorage worldStorage) {
+		worldStorage.removeSneezewort(this);
+	}
+
+	@Override
+	protected void accept(Collidable collidable) {
+		collidable.collideWithSneezewort(this);
+	}
+
+
+	@Override
+	public boolean canMoveRight() {
 		return !isDead();
 	}
 
 	@Override
-	public boolean canRunRight() {
+	public boolean isMovingRight() {
+		return ((RunKinematics) getKinematics()).getVelocity() > 0;
+	}
+
+	@Override
+	public boolean canMoveLeft() {
 		return !isDead();
 	}
 
 	@Override
-	public boolean isRunningRight() {
-		return kinematics.getXVelocity() > 0;
+	public boolean isMovingLeft() {
+		return ((RunKinematics) getKinematics()).getVelocity() < 0;
 	}
 
 	@Override
-	public boolean canStartRunLeft() {
-		return !isDead();
+	public void startMoveRight() {
+		((RunKinematics) getKinematics()).setVelocity(0.5);
 	}
 
 	@Override
-	public boolean canRunLeft() {
-		return !isDead();
+	public void endMove() {
+		assert(isMovingHorizontally() && !isDead());
+		((RunKinematics) getKinematics()).setVelocity(0.0);
 	}
 
 	@Override
-	public boolean isRunningLeft() {
-		return kinematics.getXVelocity() < 0;
+	public void startMoveLeft() {
+		((RunKinematics) getKinematics()).setVelocity(-0.5);
 	}
 
-	@Override
-	public void startRunRight() {
-		kinematics.setXVelocity(0.5);
-		super.setSprite(1);
-		super.setMoveTime(0);
-	}
-
-	@Override
-	public void endRunRight() {
-		kinematics.setXVelocity(0.0);
-	}
-
-	@Override
-	public void startRunLeft() {
-		kinematics.setXVelocity(-0.5);
-		super.setSprite(0);
-		super.setMoveTime(0);
-	}
-
-	@Override
-	public void endRunLeft() {
-		kinematics.setXVelocity(0.0);
-	}
-
-	@Override
-	public void run(double deltaT) {
-		super.setMoveTime(getMoveTime()+deltaT);
-		super.updateHorizontalComponent(this.getPosition().getX() + (kinematics.getXVelocity()*deltaT) + (kinematics.getXAcceleration()*deltaT*deltaT/2));
-		kinematics.updateXVelocity(deltaT);
-	}
 		
 }
